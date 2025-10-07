@@ -1,8 +1,25 @@
-/*
+.task-timer-stats { display: grid; gap: 4px; margin-bottom: 8px; }
+.task-timer-running .tt-row { display: flex; flex-direction: column; gap: 8px; margin: 4px 0; }
+.task-timer-running .child { margin-left: 16px; }
+.task-timer-archive table { width: 100%; border-collapse: collapse; }
+.task-timer-archive th, .task-timer-archive td { border-bottom: 1px solid var(--background-modifier-border); padding: 6px 8px; }
+.task-timer-archive th { text-align: left; }
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.task-timer-container {
+	overflow-y: auto;
+}
 
-If your plugin does not need CSS, delete this file.
+.task-timer-container .setting-item-control {
+	width: 100%;
+	flex-wrap: wrap;
+}
 
-*/
+.task-timer-container .setting-item-control input {
+	flex-grow: 1;
+}
+
+
+.task-timer-container .setting-item-info {
+	display: none;
+}
+
