@@ -7,7 +7,7 @@ export function pad(num?: number | null): string {
 }
 
 export function formatDuration(ms: number): string {
-  if (ms < 0 || !Number.isFinite(ms)) return "0:00:00";
+  if (ms < 0 || !Number.isFinite(ms)) return "00s";
   const totalSec = Math.floor(ms / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
@@ -55,4 +55,12 @@ export function calcOwnDuration(startISO?: string | null, endISO?: string | null
   const end = (endISO ? parseISO(endISO) : new Date())?.getTime();
   if (!start || !end) return 0;
   return Math.max(0, end - start);
+}
+
+export function formatDate(format: string, date: string): string {
+	return window.moment(date).format(format);
+}
+
+export function getArchiveFileName() {
+	return `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
 }

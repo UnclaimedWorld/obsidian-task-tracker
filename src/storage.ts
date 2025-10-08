@@ -1,14 +1,13 @@
 import { App, TFile } from "obsidian";
 import { TaskEntry, TimekeepTaskEntry } from './types';
 
-export const ARCHIVE_PATH = "archive.md"; // Корень хранилища
 
 export class TaskStorage {
 	constructor(private app: App) { }
 
-	async loadArchive(): Promise<TaskEntry[]> {		
+	async loadArchive(url: string): Promise<TaskEntry[]> {		
 		try {
-			const file = this.app.vault.getFileByPath(ARCHIVE_PATH);
+			const file = this.app.vault.getFileByPath(url);
 
 			if (!file) return [];
 			const content = await this.app.vault.read(file as TFile);
@@ -23,11 +22,11 @@ export class TaskStorage {
 		}
 	}
 
-	async saveArchive(tasks: TaskEntry[]): Promise<void> {
+	async saveArchive(tasks: TaskEntry[], url: string): Promise<void> {
 		const data = this.toTimekeepFormatJSON(tasks);
 		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
 
-		const file = this.app.vault.getAbstractFileByPath(ARCHIVE_PATH);
+		const file = this.app.vault.getAbstractFileByPath(url);
 		if (file instanceof TFile) {
 			const content = await this.app.vault.read(file as TFile);
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
@@ -44,7 +43,12 @@ export class TaskStorage {
 
 			await this.app.vault.modify(file, appendContent);
 		} else {
-			await this.app.vault.create(ARCHIVE_PATH, mdContent);
+			try {
+				await this.app.vault.createFolder(url.slice(0, url.lastIndexOf('/')));
+			} catch(e) {
+				console.log(e);
+			}
+			await this.app.vault.create(url, mdContent);
 		}
 	}
 

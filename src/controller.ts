@@ -1,16 +1,19 @@
-import { App } from 'obsidian';
+import { App, TAbstractFile, TFile } from 'obsidian';
 import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
+import { getArchiveFileName } from './utils';
 
 export default class TaskController {
 	private view: TaskTimerView
 	private model: TimerModel
 	private storage!: TaskStorage
+	private archiveUrl: string;
 	isContentLoaded = false;
 	isLayoutOpened = false;
 
 	constructor(private app: App) {
+		this.updateArchiveUrl();
 		this.storage = new TaskStorage(this.app);
 		this.model = new TimerModel();
 	}
@@ -23,22 +26,47 @@ export default class TaskController {
 		return this.model.getFlatRunningTasks()
 	}
 
-	async loadModel() {
-		if (this.isContentLoaded) return;
+	updateArchiveUrl() {
+		this.archiveUrl = `Достижения/${getArchiveFileName()}`;
+	}
 
-		const archive = await this.storage.loadArchive();
+	// TODO Пока что не работает
+	async updateArchiveUrlAndReloadModel() {
+		const oldArchiveUrl = this.archiveUrl;
+		this.updateArchiveUrl();
+
+		if (this.archiveUrl !== oldArchiveUrl) {
+			await this.loadModel();
+		}
+	}
+
+	async loadArchive() {
+		const archive = await this.storage.loadArchive(this.archiveUrl);
 		this.model.initModel(archive);
 		this.isContentLoaded = true;
+	}
+
+	async loadModel() {
+		await this.loadArchive();
 		this.openView();
 	}
 
-	async setView(view: TaskTimerView) {
+	modifyHandler(file: TAbstractFile) {
+		if (file instanceof TFile && file.path === this.archiveUrl) {
+			this.loadArchive();
+		}
+	}
+
+	async setViewOnce(view: TaskTimerView) {
 		this.view = view;
 		this.openView();
+
+		this.view.registerEvent(this.app.vault.on('modify', this.modifyHandler.bind(this)));
 	}
 
-	openView() {
+	async openView() {
 		if (this.isContentLoaded && this.view?.opened) {
+			this.updateArchiveUrlAndReloadModel();
 			this.view.renderView();
 		}
 	}
@@ -51,12 +79,12 @@ export default class TaskController {
 	appendTask(name: string) {
 		this.model.appendTask(name);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks());
+		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
 	}
 
 	endAllTasks() {
 		this.model.endAllTasks();
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks());
+		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
 	}
 }

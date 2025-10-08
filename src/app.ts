@@ -18,7 +18,7 @@ export default class TaskTimerPlugin extends Plugin {
 			(leaf: WorkspaceLeaf) => {
 				const view = new TaskTimerView(leaf, this.controller);
 				
-				this.controller.setView(view);
+				this.controller.setViewOnce(view);
 
 				return view;
 			}
