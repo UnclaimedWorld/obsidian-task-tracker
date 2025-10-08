@@ -1,10 +1,10 @@
 {
   "id": "obsidian-task-timer",
-  "name": "Task Timer (Parallel & Nested)",
+  "name": "Task Timer",
   "version": "0.1.0",
   "minAppVersion": "1.4.0",
-  "description": "Измерение задач с вложенными параллельными подзадачами и Архивом в JSON.",
-  "author": "You",
+  "description": "",
+  "author": "Damir Khalimov",
   "authorUrl": "",
   "isDesktopOnly": false
 }
