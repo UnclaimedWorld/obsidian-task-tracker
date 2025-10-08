@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { TaskEntry } from './types';
+import { TaskEntry, TimekeepTaskEntry } from './types';
 
 export const ARCHIVE_PATH = "archive.md"; // Корень хранилища
 
@@ -9,24 +9,66 @@ export class TaskStorage {
 	async loadArchive(): Promise<TaskEntry[]> {
 		try {
 			const file = this.app.vault.getFileByPath(ARCHIVE_PATH);
+
 			if (!file) return [];
 			const content = await this.app.vault.read(file as TFile);
 
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
 			if (!match) return [];
-			const jsonText = match[1];
-			const data = JSON.parse(jsonText);
-			if (Array.isArray(data)) return data as TaskEntry[];
-			return [];
+
+			return this.fromTimekeepFormat(match[1]);
 		} catch (e) {
 			console.error(e);
 			return [];
 		}
 	}
 
+	toTimekeepFormatJSON(tasks: TaskEntry[]): string {
+		return JSON.stringify({
+			entries: tasks
+		});
+	}
+
+	mapTimekeepEntry(entry: TimekeepTaskEntry | TaskEntry, name?: string): TaskEntry {
+		if ('subEntries' in entry) {
+			const { subEntries: _, ...task } = entry;
+
+			return {
+				...task,
+				name: name && !name.startsWith('Part') ? name : task.name,
+				id: String(Math.random())
+			}
+		}
+		
+		return entry;
+	}
+
+	flattenTimekeepSubEntries(tasks: TimekeepTaskEntry[] | null, name?: string): TaskEntry[] {
+		if (!tasks?.length) return [];
+
+		return tasks.flatMap(entry => {
+			if (entry.subEntries?.length) {
+				return this.flattenTimekeepSubEntries(entry.subEntries, entry.name);
+			} else {
+				return [ this.mapTimekeepEntry(entry, name) ];
+			}
+		});
+	}
+
+	fromTimekeepFormat(json: string): TaskEntry[] {
+		try {
+			const data = JSON.parse(json);
+			const entries: TimekeepTaskEntry[] = data.entries;
+
+			return this.flattenTimekeepSubEntries(entries);
+		} catch(e) {
+			console.log(e);
+			return [];
+		}
+	}
 
 	async saveArchive(tasks: TaskEntry[]): Promise<void> {
-		const data = JSON.stringify(tasks, null);
+		const data = this.toTimekeepFormatJSON(tasks);
 		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
 
 		const file = this.app.vault.getAbstractFileByPath(ARCHIVE_PATH);
@@ -34,11 +76,12 @@ export class TaskStorage {
 			const content = await this.app.vault.read(file as TFile);
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
 			let appendContent = '';
+			const index = match ? (match.index ?? -1) : -1;
 
-			if (match && match.index > -1) {
-				appendContent = content.slice(0, match.index) +
+			if (match && index > -1) {
+				appendContent = content.slice(0, index) +
 					mdContent +
-					content.slice(match.index + match[0].length);					
+					content.slice(index + match[0].length);					
 			} else {
 				appendContent = content + '\n' + mdContent;
 			}

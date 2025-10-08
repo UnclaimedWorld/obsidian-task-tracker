@@ -1,8 +1,8 @@
 
 import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon } from "obsidian";
-import { TaskEntry } from "./model";
 import TaskController from './controller';
-import { formatTime, isoNow, formatDuration, calcOwnDuration } from './utils';
+import { formatTime, formatDuration, calcOwnDuration } from './utils';
+import { TaskEntry } from "./types";
 
 export const VIEW_TYPE_TASK_TIMER = "task-timer-view";
 
@@ -48,11 +48,7 @@ export class TaskTimerView extends ItemView {
 
 	renderBaseElements() {
 		const container = this.getContainer();
-
-    container.createEl("h2", { 
-			text: "Task Timer",
-			cls: 'task-timer-header'
-		});
+		
 		this.controlsEl = container.createDiv();
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
 	}
@@ -70,9 +66,12 @@ export class TaskTimerView extends ItemView {
 			}
 		});
 
+		this.input.inputEl.classList.add('task-timer-input');
+
     this.subBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('play')
 			.setTooltip('Start task')
+			.setClass('task-timer-button')
       .onClick(async () => {
 				this.controller.appendTask(this.readAndClearInputValue());
       });
@@ -80,6 +79,7 @@ export class TaskTimerView extends ItemView {
     this.endBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('pause')
 			.setTooltip('Stop all tasks')
+			.setClass('task-timer-button')
       .onClick(async () => {
         this.controller.endAllTasks();
       });
@@ -87,6 +87,7 @@ export class TaskTimerView extends ItemView {
     this.startBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('step-forward')
 			.setTooltip('Stop all and start task')
+			.setClass('task-timer-button')
       .onClick(async () => {
 				this.controller.startNewTask(this.readAndClearInputValue());
       });
@@ -115,7 +116,7 @@ export class TaskTimerView extends ItemView {
 		const container = this.archiveTableEl;
 		container.empty();
 
-		const renderRow = (task: TaskEntry, depth = 0) => {
+		const renderRow = (task: TaskEntry) => {
 			const isDone = !!task.endTime;
 
 			const body = container.createDiv({
@@ -125,7 +126,9 @@ export class TaskTimerView extends ItemView {
 			const labelEl = body.createDiv({
 				cls: [
 					'task-timer-item__label-wrap',
-					isDone ? 'task-timer-item__label-wrap--done' : 'task-timer-item__label-wrap--running'
+					isDone 
+						? 'task-timer-item__label-wrap--done' 
+						: 'task-timer-item__label-wrap--running'
 				]
 			});
 
@@ -166,6 +169,6 @@ export class TaskTimerView extends ItemView {
 			}
 		};
 
-		for (const e of this.controller.tasks) renderRow(e, 0);
+		for (const e of this.controller.tasks) renderRow(e);
 	}
 }

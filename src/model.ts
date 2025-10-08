@@ -36,8 +36,7 @@ export class TimerModel {
 			id,
 			name, 
 			startTime: isoNow(), 
-			endTime: null, 
-			subEntries: [] 
+			endTime: null
 		};
 	}
 

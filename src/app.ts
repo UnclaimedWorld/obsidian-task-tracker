@@ -1,13 +1,9 @@
 
-import { Plugin, WorkspaceLeaf } from "obsidian";
-import { Storage } from "./storage";
-import { TimerModel } from "./model";
+import { Platform, Plugin, WorkspaceLeaf } from "obsidian";
 import { TaskTimerView, VIEW_TYPE_TASK_TIMER } from "./view";
 import TaskController from './controller';
 
 export default class TaskTimerPlugin extends Plugin {
-	private storage!: Storage;
-	private model!: TimerModel;
 	private controller!: TaskController;
 
 	async onload() {
@@ -34,8 +30,14 @@ export default class TaskTimerPlugin extends Plugin {
 	async activateView() {
 		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_TIMER);
 		if (leaves.length === 0) {
-			await this.app.workspace.getRightLeaf(false).setViewState({ type: VIEW_TYPE_TASK_TIMER, active: true });
+			let leaf = this.app.workspace.getRightLeaf(false);
+			if (!leaf) {
+				leaf = this.app.workspace.getLeaf(!Platform.isDesktop);
+			}
+
+			await leaf.setViewState({ type: VIEW_TYPE_TASK_TIMER, active: true });
 		}
+
 		this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_TIMER)[0]);
 	}
 }

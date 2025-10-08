@@ -1,5 +1,11 @@
 import { TaskEntry } from './types';
 
+export function pad(num?: number | null): string {
+	if (!num) return '00';
+
+  return num.toString().padStart(2, '0');
+}
+
 export function formatDuration(ms: number): string {
   if (ms < 0 || !Number.isFinite(ms)) return "0:00:00";
   const totalSec = Math.floor(ms / 1000);
@@ -17,7 +23,7 @@ export function formatDuration(ms: number): string {
 		string += ` ${m}m`;
 	}
 
-	string += ` ${s}s`;
+	string += ` ${pad(s)}s`;
 	
 	return string.trim();
 }
@@ -41,7 +47,7 @@ export function formatTime(date?: string | null): string {
 
 	const parsed = parseISO(date);
 
-	return `${parsed?.getHours()}:${parsed?.getMinutes()}:${parsed?.getSeconds()}`;
+	return `${pad(parsed?.getHours())}:${pad(parsed?.getMinutes())}:${pad(parsed?.getSeconds())}`;
 }
 
 export function calcOwnDuration(startISO?: string | null, endISO?: string | null): number {
