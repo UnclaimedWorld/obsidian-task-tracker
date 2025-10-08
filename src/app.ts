@@ -24,7 +24,7 @@ export default class TaskTimerPlugin extends Plugin {
 		);
 
 		this.addRibbonIcon("clock", "Task Timer", () => this.activateView());
-		this.addCommand({ id: "open-task-timer", name: "Открыть Task Timer", callback: () => this.activateView() });
+		this.addCommand({ id: "open-task-timer", name: "Open Task Timer", callback: () => this.activateView() });
 	}
 
 	async onunload() {

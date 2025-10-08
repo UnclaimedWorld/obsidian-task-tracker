@@ -1,25 +1,16 @@
-import { Archive, ModelSubscribeKeys, TaskEntry } from './types';
-import { Listener } from './utils';
+import { Archive, TaskEntry } from './types';
+import { isoNow } from './utils';
 
-export class TimerModel extends Listener<ModelSubscribeKeys> {
+export class TimerModel {
   archive: Archive;
-	runningTasks: Archive;
-  private blockCounter = 1;
 
 	constructor() {
-		super();
-
 		this.archive = new Map();
-		this.runningTasks = new Map();
 	}
 
 	initModel(archive: TaskEntry[]) {
 		archive.forEach(task => {
 			this.archive.set(task.id, task);
-
-			if (!task.endTime) {
-				this.runningTasks.set(task.id, task);
-			}
 		});
 	}
 
@@ -31,23 +22,20 @@ export class TimerModel extends Listener<ModelSubscribeKeys> {
 	}
 
 	get flatRunningTasks(): TaskEntry[] {
-		return Array.from(this.runningTasks.values());
-	}
-
-	getNowTime() {
-		return new Date().toISOString();
+		return this.flatTasks.filter(({ endTime }) => !endTime);
 	}
 
 	getNewTask(name?: string): TaskEntry {
-		const counter = this.blockCounter++;
-		const id = Date.now() + 'counter';
+		const id = Date.now() + 'c';
 
-    if (!name?.trim()) name = `Block ${counter}`;
+    if (!name?.trim()) name = `Block ${this.flatTasks.length + 1}`;
+
+		console.log(isoNow());
 
 		return {
 			id,
 			name, 
-			startTime: this.getNowTime(), 
+			startTime: isoNow(), 
 			endTime: null, 
 			subEntries: [] 
 		};
@@ -57,31 +45,20 @@ export class TimerModel extends Listener<ModelSubscribeKeys> {
     const root: TaskEntry = this.getNewTask(name);
 
     this.archive.set(root.id, root);
-    this.runningTasks.set(root.id, root);
-		this.notify(ModelSubscribeKeys.Update);
 	}
 
   endTaskById(id: string) {
-		const task = this.runningTasks.get(id);
+		const task = this.archive.get(id);
 
 		if (task) {
-			task.endTime = this.getNowTime();	
+			task.endTime = isoNow();	
 		}
-
-		this.notify(ModelSubscribeKeys.Update);
   }
 
 	endAllTasks() {
-		let changed = false;
-
-		for(const value of this.flatRunningTasks) {
-			value.endTime = this.getNowTime();
-			changed = true;
+		for(const task of this.flatRunningTasks) {
+			task.endTime = isoNow();
 		}
-
-		this.runningTasks.clear();
-
-		if (changed) this.notify(ModelSubscribeKeys.Update);
 	}
 
   renameTaskById(id: string, newName: string) {
@@ -90,15 +67,13 @@ export class TimerModel extends Listener<ModelSubscribeKeys> {
 		if (task) {
 			task.name = newName.trim();	
 		}
-
-		this.notify(ModelSubscribeKeys.Update);
   }
 
 	intersectionDuration(prevTask: TaskEntry, nextTask: TaskEntry): number {
 		const startPrev = Date.parse(prevTask.startTime);
-		const endPrev = Date.parse(prevTask.endTime || this.getNowTime());
+		const endPrev = Date.parse(prevTask.endTime || isoNow());
 		const startNew = Date.parse(nextTask.startTime);
-		const endNew = Date.parse(nextTask.endTime || this.getNowTime());
+		const endNew = Date.parse(nextTask.endTime || isoNow());
 
 		if (startPrev <= startNew && endNew <= endPrev) {
 			return startPrev - endPrev;

@@ -1,16 +1,8 @@
 
-import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, MarkdownRenderer } from "obsidian";
-import { TimerModel, TaskEntry } from "./model";
-import { formatDuration } from "./utils";
-import { ARCHIVE_PATH, Storage } from "./storage";
-import { ModelSubscribeKeys, ViewSubscribeKeys } from './types';
-import { Listener } from './utils';
+import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon } from "obsidian";
+import { TaskEntry } from "./model";
 import TaskController from './controller';
-import { calcOwnDuration } from './utils';
-import { isoNow, parseISO } from './utils';
-import { formatDate } from './utils';
-import { isSameDay } from './utils';
-import { formatTime } from './utils';
+import { formatTime, isoNow, formatDuration, calcOwnDuration } from './utils';
 
 export const VIEW_TYPE_TASK_TIMER = "task-timer-view";
 
@@ -22,31 +14,15 @@ export class TaskTimerView extends ItemView {
 
 	private interval?: number;
 
-	private runningListEl!: HTMLElement;
 	private archiveTableEl!: HTMLElement;
 
-	private headerLabelEl!: HTMLElement;
 	private controlsEl!: HTMLElement;
-
-	private listener = new Listener<ViewSubscribeKeys>();
 
 	constructor(
 		leaf: WorkspaceLeaf, 
 		private controller: TaskController
 	) {
 		super(leaf);
-	}
-
-	subscribe(name: ViewSubscribeKeys, callback: Function) {
-		this.listener.subscribe(name, callback);
-	}
-
-	unsubscribe(name: ViewSubscribeKeys, callback: Function) {
-		this.listener.unsubscribe(name, callback);
-	}
-
-	notify(name: ViewSubscribeKeys) {
-		this.listener.notify(name);
 	}
 
 	getViewType(): string { return VIEW_TYPE_TASK_TIMER; }
@@ -61,7 +37,6 @@ export class TaskTimerView extends ItemView {
 	}
 
 	updateView() {
-    this.renderRunningList();
 		this.renderArchiveTable();
 	}
 
@@ -74,11 +49,11 @@ export class TaskTimerView extends ItemView {
 	renderBaseElements() {
 		const container = this.getContainer();
 
-    this.headerLabelEl = container.createEl("h2", { text: "Task Timer" });
+    container.createEl("h2", { 
+			text: "Task Timer",
+			cls: 'task-timer-header'
+		});
 		this.controlsEl = container.createDiv();
-
-    container.createEl("h3", { text: "Запущенные сейчас задачи" });
-    this.runningListEl = container.createDiv({ cls: "task-timer-running" });
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
 	}
 
@@ -86,27 +61,34 @@ export class TaskTimerView extends ItemView {
 		const container = this.controlsEl;
 
     const controls = new Setting(container);
-    this.input = new TextComponent(controls.controlEl).setPlaceholder("Например: Подготовка отчёта");
+    this.input = new TextComponent(controls.controlEl)
+			.setPlaceholder("E.g. Buy a milk")
 
-    this.startBtn = new ButtonComponent(controls.controlEl)
+		this.input.inputEl.addEventListener("keyup", ({key}) => {
+			if (key === 'Enter') { 
+				this.controller.appendTask(this.readAndClearInputValue());
+			}
+		});
+
+    this.subBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('play')
-			.setTooltip('Новая задача')
+			.setTooltip('Start task')
       .onClick(async () => {
-				this.controller.startNewTask(this.readAndClearInputValue());
+				this.controller.appendTask(this.readAndClearInputValue());
       });
 
     this.endBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('pause')
-			.setTooltip('Завершение задач')
+			.setTooltip('Stop all tasks')
       .onClick(async () => {
         this.controller.endAllTasks();
       });
 
-    this.subBtn = new ButtonComponent(controls.controlEl)
-			.setIcon('list-video')
-			.setTooltip('Дополнительная задача')
+    this.startBtn = new ButtonComponent(controls.controlEl)
+			.setIcon('step-forward')
+			.setTooltip('Stop all and start task')
       .onClick(async () => {
-				this.controller.appendTask(this.readAndClearInputValue());
+				this.controller.startNewTask(this.readAndClearInputValue());
       });
 	}
 
@@ -117,8 +99,6 @@ export class TaskTimerView extends ItemView {
 	}
 
 	async onOpen() {
-		this.notify(ViewSubscribeKeys.Open);
-
 		const container = this.getContainer();
 		container.classList.add('task-timer-container');
 
@@ -128,83 +108,62 @@ export class TaskTimerView extends ItemView {
 	}
 
 	async onClose() {
-		this.notify(ViewSubscribeKeys.Close);
 		if (this.interval) window.clearInterval(this.interval);
-	}
-
-	private renderRunningList() {
-		const container = this.runningListEl;
-		container.empty();
-
-		if (!this.controller.runningTasks.length) {
-			container.createEl("div", { text: "Нет активных задач" });
-			return;
-		}
-
-		const rootRow = container.createDiv({ cls: "tt-row" });
-
-		this.controller.runningTasks.forEach(task => {
-			rootRow.createDiv({ 
-				text: `${task.name} — ${formatDuration(calcOwnDuration(task.startTime, isoNow()))}`
-			});
-		});
 	}
 
 	private renderArchiveTable() {
 		const container = this.archiveTableEl;
 		container.empty();
 
-		const renderRow = (entry: TaskEntry, depth = 0) => {
+		const renderRow = (task: TaskEntry, depth = 0) => {
+			const isDone = !!task.endTime;
+
 			const body = container.createDiv({
-				cls: 'task-timer-done-tasks'
+				cls: 'task-timer-item'
 			});
 
-			const formattedDate = isSameDay(entry) 
-				? `${formatDate(entry.startTime)} - ${formatTime(entry.endTime)}`
-				: `${formatDate(entry.startTime)} - ${formatDate(entry.endTime) || '-'}`;
-
-			body.createEl('hr');
-
-			body.createEl('h3', {
-				text: entry.name
+			const labelEl = body.createDiv({
+				cls: [
+					'task-timer-item__label-wrap',
+					isDone ? 'task-timer-item__label-wrap--done' : 'task-timer-item__label-wrap--running'
+				]
 			});
 
-
-			body.createEl('p', {
-				text: formattedDate
+			setIcon(labelEl.createSpan(), isDone ? 'circle-check-big' : 'loader-circle')
+			
+			labelEl.createEl('h3', {
+				text: task.name,
+				cls: 'task-timer-item__label'
 			});
 
+			createTime(labelEl);
 
-			// const tr = tbody.createEl("tr");
-			// const nameTd = tr.createEl("td");
-			// nameTd.style.paddingLeft = `${depth * 20}px`;
-			// nameTd.setText(entry.name);
+			body.createSpan({
+				text: formatDuration(calcOwnDuration(task.startTime, task.endTime)),
+				cls: 'task-timer-item__date'
+			});
 
-			// const startTd = tr.createEl("td", { text: entry.startTime ? new Date(entry.startTime).toLocaleString() : "" });
-			// const endTd = tr.createEl("td", { text: entry.endTime ? new Date(entry.endTime).toLocaleString() : "" });
+			body.createEl('hr', { cls: 'task-timer-item__delimiter' });
 
-			// const durationMs = (() => {
-			// 	const start = entry.startTime ? new Date(entry.startTime).getTime() : 0;
-			// 	const end = entry.endTime ? new Date(entry.endTime).getTime() : Date.now();
-			// 	return Math.max(0, end - start);
-			// })();
-			// const durTd = tr.createEl("td", { text: formatDuration(durationMs) });
+			function createTime(container: HTMLElement) {
+				const dateWrapperEl = container.createEl('p', {
+					cls: 'task-timer-item__time'
+				});
 
-			// const ctrlTd = tr.createEl("td");
-			// const contBtn = ctrlTd.createEl("button", { text: "Продолжить" });
-			// const renBtn = ctrlTd.createEl("button", { text: "Переименовать" });
-			// const delBtn = ctrlTd.createEl("button", { text: "Удалить" });
-			// const editBtn = ctrlTd.createEl("button", { text: "Изменить время" });
+				dateWrapperEl.createSpan({
+					text: formatTime(task.startTime)
+				});
 
-			// for (const b of [contBtn, renBtn, delBtn, editBtn]) {
-			// 	b.onclick
-			// 	b.setAttr("disabled", "true");
-			// 	b.title = "Функционал будет добавлен позже";
-			// }
+				if (isDone) {
+					dateWrapperEl.createSpan({
+						text: ' - ',
+					});
 
-			// if (entry.subEntries?.length) {
-			// 	for (const child of entry.subEntries) renderRow(child, depth + 1);
-			// }
+					dateWrapperEl.createSpan({
+						text: formatTime(task.endTime)
+					});
+				}
+			}
 		};
 
 		for (const e of this.controller.tasks) renderRow(e, 0);

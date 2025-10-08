@@ -1,14 +1,12 @@
 import { App } from 'obsidian';
-import { Archive, TimerModel } from "./model";
+import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
-import { ViewSubscribeKeys } from './types';
 
 export default class TaskController {
 	private view!: TaskTimerView
 	private model!: TimerModel
 	private storage!: TaskStorage
-	private interval?: number;
 
 	constructor(private app: App) {
 		this.storage = new TaskStorage(this.app);

@@ -6,8 +6,20 @@ export function formatDuration(ms: number): string {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${h}:${pad(m)}:${pad(s)}`;
+
+	let string = '';
+
+	if (h) {
+		string += `${h}h`;
+	}
+
+	if (m) {
+		string += ` ${m}m`;
+	}
+
+	string += ` ${s}s`;
+	
+	return string.trim();
 }
 
 export function isoNow(): string {
@@ -27,13 +39,9 @@ export function isSameDay(entry: TaskEntry): boolean {
 export function formatTime(date?: string | null): string {
 	if (!date) return '';
 
-	return date.slice(11, 19);
-}
+	const parsed = parseISO(date);
 
-export function formatDate(date?: string | null): string {
-	if (!date) return '';
-
-	return `${date.slice(0, 10)} ${formatTime(date)}`.trim();
+	return `${parsed?.getHours()}:${parsed?.getMinutes()}:${parsed?.getSeconds()}`;
 }
 
 export function calcOwnDuration(startISO?: string | null, endISO?: string | null): number {
@@ -41,25 +49,4 @@ export function calcOwnDuration(startISO?: string | null, endISO?: string | null
   const end = (endISO ? parseISO(endISO) : new Date())?.getTime();
   if (!start || !end) return 0;
   return Math.max(0, end - start);
-}
-
-export class Listener<TKey extends string> {
-	private subscribers: Record<TKey, Set<Function>> = {} as Record<TKey, Set<Function>>;
-
-	subscribe(name: TKey, callback: Function) {
-		if (!(name in this.subscribers)) {
-			this.subscribers[name] = new Set();
-		}
-		this.subscribers[name].add(callback);
-	}
-
-	unsubscribe(name: TKey, callback: Function) {
-		if (this.subscribers[name].has(callback)) {
-			this.subscribers[name].delete(callback);
-		}
-	}
-
-	notify(name: TKey) {
-		this.subscribers[name]?.forEach(callback => callback());
-	}
 }

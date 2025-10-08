@@ -1,10 +1,7 @@
 import { App, TFile } from "obsidian";
-import type { Archive } from "./model";
 import { TaskEntry } from './types';
 
-
 export const ARCHIVE_PATH = "archive.md"; // Корень хранилища
-
 
 export class TaskStorage {
 	constructor(private app: App) { }
@@ -15,7 +12,6 @@ export class TaskStorage {
 			if (!file) return [];
 			const content = await this.app.vault.read(file as TFile);
 
-			// Извлекаем JSON из блока кода
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
 			if (!match) return [];
 			const jsonText = match[1];
@@ -23,7 +19,7 @@ export class TaskStorage {
 			if (Array.isArray(data)) return data as TaskEntry[];
 			return [];
 		} catch (e) {
-			console.error("Ошибка загрузки архива:", e);
+			console.error(e);
 			return [];
 		}
 	}
@@ -35,7 +31,19 @@ export class TaskStorage {
 
 		const file = this.app.vault.getAbstractFileByPath(ARCHIVE_PATH);
 		if (file instanceof TFile) {
-			await this.app.vault.modify(file, mdContent);
+			const content = await this.app.vault.read(file as TFile);
+			const match = content.match(/```json\n([\s\S]*?)\n```/);
+			let appendContent = '';
+
+			if (match && match.index > -1) {
+				appendContent = content.slice(0, match.index) +
+					mdContent +
+					content.slice(match.index + match[0].length);					
+			} else {
+				appendContent = content + '\n' + mdContent;
+			}
+
+			await this.app.vault.modify(file, appendContent);
 		} else {
 			await this.app.vault.create(ARCHIVE_PATH, mdContent);
 		}
