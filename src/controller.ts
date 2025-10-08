@@ -4,49 +4,59 @@ import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
 
 export default class TaskController {
-	private view!: TaskTimerView
-	private model!: TimerModel
+	private view: TaskTimerView
+	private model: TimerModel
 	private storage!: TaskStorage
+	isContentLoaded = false;
+	isLayoutOpened = false;
 
 	constructor(private app: App) {
 		this.storage = new TaskStorage(this.app);
 		this.model = new TimerModel();
 	}
 
-	get tasks() {
-		return this.model.flatTasks
+	getTasks() {
+		return this.model.getFlatTasks()
 	}
 
-	get runningTasks() {
-		return this.model.flatRunningTasks
+	getRunningTasks() {
+		return this.model.getFlatRunningTasks()
 	}
 
-	async initView(view: TaskTimerView) {
-		await this.initModel();
-		this.view = view;
-	}
+	async loadModel() {
+		if (this.isContentLoaded) return;
 
-	async initModel() {
 		const archive = await this.storage.loadArchive();
 		this.model.initModel(archive);
+		this.isContentLoaded = true;
+		this.openView();
+	}
+
+	async setView(view: TaskTimerView) {
+		this.view = view;
+		this.openView();
+	}
+
+	openView() {
+		if (this.isContentLoaded && this.view?.opened) {
+			this.view.renderView();
+		}
 	}
 
 	startNewTask(name: string) {
 		this.model.endAllTasks();
-		this.model.appendTask(name);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.flatTasks);
+		this.appendTask(name);
 	}
 
 	appendTask(name: string) {
 		this.model.appendTask(name);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.flatTasks);
+		this.storage.saveArchive(this.model.getFlatTasks());
 	}
 
 	endAllTasks() {
 		this.model.endAllTasks();
 		this.view.updateView();
-		this.storage.saveArchive(this.model.flatTasks);
+		this.storage.saveArchive(this.model.getFlatTasks());
 	}
 }

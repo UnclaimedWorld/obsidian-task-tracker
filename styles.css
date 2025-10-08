@@ -32,6 +32,10 @@
 	margin-top: 1rem;
 }
 
+.task-timer-item:last-child {
+	padding-bottom: 50vh;
+}
+
 .task-timer-item__date,
 .task-timer-item__label-wrap {
 	margin: 0 0 var(--size-4-1);

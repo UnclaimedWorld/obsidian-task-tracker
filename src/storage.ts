@@ -6,7 +6,7 @@ export const ARCHIVE_PATH = "archive.md"; // Корень хранилища
 export class TaskStorage {
 	constructor(private app: App) { }
 
-	async loadArchive(): Promise<TaskEntry[]> {
+	async loadArchive(): Promise<TaskEntry[]> {		
 		try {
 			const file = this.app.vault.getFileByPath(ARCHIVE_PATH);
 
@@ -20,6 +20,31 @@ export class TaskStorage {
 		} catch (e) {
 			console.error(e);
 			return [];
+		}
+	}
+
+	async saveArchive(tasks: TaskEntry[]): Promise<void> {
+		const data = this.toTimekeepFormatJSON(tasks);
+		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
+
+		const file = this.app.vault.getAbstractFileByPath(ARCHIVE_PATH);
+		if (file instanceof TFile) {
+			const content = await this.app.vault.read(file as TFile);
+			const match = content.match(/```json\n([\s\S]*?)\n```/);
+			let appendContent = '';
+			const index = match ? (match.index ?? -1) : -1;
+
+			if (match && index > -1) {
+				appendContent = content.slice(0, index) +
+					mdContent +
+					content.slice(index + match[0].length);					
+			} else {
+				appendContent = content + '\n' + mdContent;
+			}
+
+			await this.app.vault.modify(file, appendContent);
+		} else {
+			await this.app.vault.create(ARCHIVE_PATH, mdContent);
 		}
 	}
 
@@ -64,31 +89,6 @@ export class TaskStorage {
 		} catch(e) {
 			console.log(e);
 			return [];
-		}
-	}
-
-	async saveArchive(tasks: TaskEntry[]): Promise<void> {
-		const data = this.toTimekeepFormatJSON(tasks);
-		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
-
-		const file = this.app.vault.getAbstractFileByPath(ARCHIVE_PATH);
-		if (file instanceof TFile) {
-			const content = await this.app.vault.read(file as TFile);
-			const match = content.match(/```json\n([\s\S]*?)\n```/);
-			let appendContent = '';
-			const index = match ? (match.index ?? -1) : -1;
-
-			if (match && index > -1) {
-				appendContent = content.slice(0, index) +
-					mdContent +
-					content.slice(index + match[0].length);					
-			} else {
-				appendContent = content + '\n' + mdContent;
-			}
-
-			await this.app.vault.modify(file, appendContent);
-		} else {
-			await this.app.vault.create(ARCHIVE_PATH, mdContent);
 		}
 	}
 }

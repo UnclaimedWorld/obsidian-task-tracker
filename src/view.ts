@@ -1,5 +1,5 @@
 
-import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon } from "obsidian";
+import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon, Platform } from "obsidian";
 import TaskController from './controller';
 import { formatTime, formatDuration, calcOwnDuration } from './utils';
 import { TaskEntry } from "./types";
@@ -13,10 +13,9 @@ export class TaskTimerView extends ItemView {
 	subBtn!: ButtonComponent;
 
 	private interval?: number;
-
 	private archiveTableEl!: HTMLElement;
-
 	private controlsEl!: HTMLElement;
+	opened = false;
 
 	constructor(
 		leaf: WorkspaceLeaf, 
@@ -67,6 +66,7 @@ export class TaskTimerView extends ItemView {
 		});
 
 		this.input.inputEl.classList.add('task-timer-input');
+		this.input.inputEl.setAttr('focus', true);
 
     this.subBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('play')
@@ -95,20 +95,34 @@ export class TaskTimerView extends ItemView {
 
 	async runInterval() {
 		this.updateView();
-    this.interval = window.setInterval(this.updateView.bind(this), 1000);
+    this.interval = window.setInterval(() => {
+			this.updateView();
+		}, 1000);
 		this.registerInterval(this.interval);
+	}
+
+	renderView() {
+		this.renderBaseElements();
+		this.renderControlElements();
+		this.runInterval();
+
+		if(Platform.isDesktop) {
+			window.setTimeout(() => {
+				this.input.inputEl.focus();
+			});
+		}
 	}
 
 	async onOpen() {
 		const container = this.getContainer();
 		container.classList.add('task-timer-container');
 
-		this.renderBaseElements();
-		this.renderControlElements();
-		this.runInterval();
+		this.opened = true;
+		this.controller.openView();
 	}
 
 	async onClose() {
+		this.opened = false;
 		if (this.interval) window.clearInterval(this.interval);
 	}
 
@@ -169,6 +183,6 @@ export class TaskTimerView extends ItemView {
 			}
 		};
 
-		for (const e of this.controller.tasks) renderRow(e);
+		for (const e of this.controller.getTasks()) renderRow(e);
 	}
 }

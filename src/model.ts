@@ -14,23 +14,21 @@ export class TimerModel {
 		});
 	}
 
-	get flatTasks(): TaskEntry[] {
+	getFlatTasks(): TaskEntry[] {
 		return Array.from(this.archive.values()).sort((a, b) => {
 			if (a.startTime < b.startTime) return 1;
 			return -1;
 		});
 	}
 
-	get flatRunningTasks(): TaskEntry[] {
-		return this.flatTasks.filter(({ endTime }) => !endTime);
+	getFlatRunningTasks(): TaskEntry[] {
+		return this.getFlatTasks().filter(({ endTime }) => !endTime);
 	}
 
 	getNewTask(name?: string): TaskEntry {
 		const id = Date.now() + 'c';
 
-    if (!name?.trim()) name = `Block ${this.flatTasks.length + 1}`;
-
-		console.log(isoNow());
+    if (!name?.trim()) name = `Block ${this.getFlatTasks().length + 1}`;
 
 		return {
 			id,
@@ -55,7 +53,7 @@ export class TimerModel {
   }
 
 	endAllTasks() {
-		for(const task of this.flatRunningTasks) {
+		for(const task of this.getFlatRunningTasks()) {
 			task.endTime = isoNow();
 		}
 	}

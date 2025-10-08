@@ -9,11 +9,16 @@ export default class TaskTimerPlugin extends Plugin {
 	async onload() {
 		this.controller = new TaskController(this.app);
 
+		this.app.workspace.onLayoutReady(() => {
+			this.controller.loadModel();
+		});
+		
 		this.registerView(
 			VIEW_TYPE_TASK_TIMER,
 			(leaf: WorkspaceLeaf) => {
-				const view = new TaskTimerView(leaf, this.controller)
-				this.controller.initView(view);
+				const view = new TaskTimerView(leaf, this.controller);
+				
+				this.controller.setView(view);
 
 				return view;
 			}
