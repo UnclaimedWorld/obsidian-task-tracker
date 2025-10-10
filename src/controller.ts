@@ -3,6 +3,7 @@ import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
 import { getArchiveFileName } from './utils';
+import { TaskForm } from './types';
 
 export default class TaskController {
 	private view: TaskTimerView
@@ -82,8 +83,20 @@ export default class TaskController {
 		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
 	}
 
+	updateTask(id: string, taskForm: TaskForm) {
+		this.model.updateTaskById(id, taskForm);
+		this.view.updateView();
+		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+	}
+
 	endAllTasks() {
 		this.model.endAllTasks();
+		this.view.updateView();
+		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+	}
+
+	endTask(id: string) {
+		this.model.endTaskById(id);
 		this.view.updateView();
 		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
 	}

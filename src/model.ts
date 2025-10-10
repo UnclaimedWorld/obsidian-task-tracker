@@ -1,4 +1,4 @@
-import { Archive, TaskEntry } from './types';
+import { Archive, TaskEntry, TaskForm } from './types';
 import { isoNow } from './utils';
 
 export class TimerModel {
@@ -9,6 +9,7 @@ export class TimerModel {
 	}
 
 	initModel(archive: TaskEntry[]) {
+		this.archive = new Map();
 		archive.forEach(task => {
 			this.archive.set(task.id, task);
 		});
@@ -25,14 +26,18 @@ export class TimerModel {
 		return this.getFlatTasks().filter(({ endTime }) => !endTime);
 	}
 
+	getTaskName(name?: string): string {
+    if (!name?.trim()) name = `Block ${this.getFlatTasks().length + 1}`;
+
+		return name;
+	}
+
 	getNewTask(name?: string): TaskEntry {
 		const id = Date.now() + 'c';
 
-    if (!name?.trim()) name = `Block ${this.getFlatTasks().length + 1}`;
-
 		return {
 			id,
-			name, 
+			name: this.getTaskName(name), 
 			startTime: isoNow(), 
 			endTime: null
 		};
@@ -58,11 +63,13 @@ export class TimerModel {
 		}
 	}
 
-  renameTaskById(id: string, newName: string) {
+  updateTaskById(id: string, newTask: TaskForm) {
 		const task = this.archive.get(id);
 
 		if (task) {
-			task.name = newName.trim();	
+			task.name = this.getTaskName(newTask.name);
+			task.startTime = newTask.startTime;
+			task.endTime = newTask.endTime;
 		}
   }
 

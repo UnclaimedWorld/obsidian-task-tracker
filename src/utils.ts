@@ -38,6 +38,11 @@ export function parseISO(s?: string | null): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+export function toISO(s?: string | null): string {
+	const parsed = parseISO(s);
+	return parsed ? parsed.toISOString() : isoNow();
+}
+
 export function isSameDay(entry: TaskEntry): boolean {
 	return entry.startTime.slice(0, 10) === entry.endTime?.slice(0, 10);
 }
@@ -63,4 +68,8 @@ export function formatDate(format: string, date: string): string {
 
 export function getArchiveFileName() {
 	return `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
+}
+
+export function isTaskDone(task: TaskEntry): boolean {
+	return !!task.endTime;
 }

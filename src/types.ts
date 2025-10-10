@@ -12,5 +12,10 @@ export type TimekeepTaskEntry = {
   subEntries: TimekeepTaskEntry[] | null;
 };
 
+export type TaskForm = {
+  name: string;
+  startTime: string;
+  endTime: string;
+}
 
 export type Archive = Map<string, TaskEntry>;

@@ -1,8 +1,9 @@
 
 import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon, Platform } from "obsidian";
 import TaskController from './controller';
-import { formatTime, formatDuration, calcOwnDuration } from './utils';
+import { formatTime, formatDuration, calcOwnDuration, isTaskDone } from './utils';
 import { TaskEntry } from "./types";
+import { EditTaskModal } from './modal';
 
 export const VIEW_TYPE_TASK_TIMER = "task-timer-view";
 
@@ -15,6 +16,7 @@ export class TaskTimerView extends ItemView {
 	private interval?: number;
 	private archiveTableEl!: HTMLElement;
 	private controlsEl!: HTMLElement;
+	private editModalInstance: EditTaskModal | null;
 	opened = false;
 
 	constructor(
@@ -43,6 +45,14 @@ export class TaskTimerView extends ItemView {
 		const container = this.containerEl;
 		container.empty();
 		return container;
+	}
+
+	openEditModal(task: TaskEntry) {
+		if (!this.editModalInstance) {
+			this.editModalInstance = new EditTaskModal(this.controller, this.app);
+		}
+
+		this.editModalInstance.openModal(task);
 	}
 
 	renderBaseElements() {
@@ -126,12 +136,61 @@ export class TaskTimerView extends ItemView {
 		if (this.interval) window.clearInterval(this.interval);
 	}
 
+	renderTableAction(container: HTMLElement, task: TaskEntry) {
+    const controls = new Setting(container);
+
+		const playButton = new ButtonComponent(controls.controlEl)
+			.setClass('task-timer-button')
+		
+		new ButtonComponent(controls.controlEl)
+			.setClass('task-timer-button')
+			.setIcon('pencil')
+			.setTooltip('Edit task')
+			.onClick(() => {
+				this.openEditModal(task);
+			})
+
+		if (isTaskDone(task)) {
+			playButton.setIcon('play')
+				.setTooltip('Start task with such name')
+				.onClick(() => {
+					this.controller.appendTask(task.name);
+				});
+		} else {
+			playButton.setIcon('pause')
+				.setTooltip('Stop task')
+				.onClick(() => {
+					this.controller.endTask(task.id);
+				});
+		}
+	}
+
+	renderTime(container: HTMLElement, task: TaskEntry) {
+		const dateWrapperEl = container.createEl('p', {
+			cls: 'task-timer-item__time'
+		});
+
+		dateWrapperEl.createSpan({
+			text: formatTime(task.startTime)
+		});
+
+		if (isTaskDone(task)) {
+			dateWrapperEl.createSpan({
+				text: ' - ',
+			});
+
+			dateWrapperEl.createSpan({
+				text: formatTime(task.endTime)
+			});
+		}
+	}
+
 	private renderArchiveTable() {
 		const container = this.archiveTableEl;
 		container.empty();
 
 		const renderRow = (task: TaskEntry) => {
-			const isDone = !!task.endTime;
+			const isDone = isTaskDone(task);
 
 			const body = container.createDiv({
 				cls: 'task-timer-item'
@@ -146,41 +205,33 @@ export class TaskTimerView extends ItemView {
 				]
 			});
 
-			setIcon(labelEl.createSpan(), isDone ? 'circle-check-big' : 'loader-circle')
+			const spanLabel = labelEl.createDiv({
+				cls: 'task-timer-item__label-text'
+			});
+
+			setIcon(spanLabel.createSpan({
+				cls: 'task-timer-item__label-icon'
+			}), isDone ? 'circle-check-big' : 'loader-circle')
 			
-			labelEl.createEl('h3', {
+			spanLabel.createEl('h3', {
 				text: task.name,
 				cls: 'task-timer-item__label'
 			});
 
-			createTime(labelEl);
+			this.renderTime(labelEl, task);
 
-			body.createSpan({
+			const bottomRow = body.createDiv({
+				cls: 'task-timer-item__date-wrap'
+			})
+
+			bottomRow.createSpan({
 				text: formatDuration(calcOwnDuration(task.startTime, task.endTime)),
 				cls: 'task-timer-item__date'
 			});
 
+			this.renderTableAction(bottomRow, task);
+
 			body.createEl('hr', { cls: 'task-timer-item__delimiter' });
-
-			function createTime(container: HTMLElement) {
-				const dateWrapperEl = container.createEl('p', {
-					cls: 'task-timer-item__time'
-				});
-
-				dateWrapperEl.createSpan({
-					text: formatTime(task.startTime)
-				});
-
-				if (isDone) {
-					dateWrapperEl.createSpan({
-						text: ' - ',
-					});
-
-					dateWrapperEl.createSpan({
-						text: formatTime(task.endTime)
-					});
-				}
-			}
 		};
 
 		for (const e of this.controller.getTasks()) renderRow(e);

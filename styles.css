@@ -36,15 +36,11 @@
 	padding-bottom: 50vh;
 }
 
-.task-timer-item__date,
 .task-timer-item__label-wrap {
 	margin: 0 0 var(--size-4-1);
-}
-
-.task-timer-item__label-wrap {
 	display: flex;
 	align-items: flex-start;
-	gap: var(--size-4-1);
+	gap: var(--size-4-1) var(--size-4-2);
 	flex-wrap: wrap;
 
 	svg {
@@ -52,13 +48,31 @@
 	}
 }
 
-.task-timer-item__label {
+.task-timer-item__label-text {
 	margin: 0 auto 0 0;
-	width: 7rem;
+	width: 10rem;
 	flex-grow: 1;
 }
 
+.task-timer-item__label-wrap--running svg {
+	color: var(--text-warning);
+}
+
+.task-timer-item__label-wrap--done svg {
+	color: var(--text-success);
+}
+
+.task-timer-item__label {
+	display: inline;
+}
+
+.task-timer-item__label-icon {
+	vertical-align: middle;
+	margin-right: var(--size-4-1);
+}
+
 .task-timer-item__date {
+	margin: 0;
 	color: var(--text-muted);
 }
 
@@ -71,12 +85,15 @@
 	margin: var(--size-4-4) 0 0;
 }
 
-.task-timer-item__label-wrap--running svg {
-	color: var(--text-warning);
-}
+.task-timer-item__date-wrap {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 
-.task-timer-item__label-wrap--done svg {
-	color: var(--text-success);
+	.setting-item {
+		padding: 0;
+		border: 0;
+	}
 }
 
 @container(width < 350px) {
