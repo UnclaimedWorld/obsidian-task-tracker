@@ -20,7 +20,7 @@ export class TaskTimerView extends ItemView {
 	opened = false;
 
 	constructor(
-		leaf: WorkspaceLeaf, 
+		leaf: WorkspaceLeaf,
 		private controller: TaskController
 	) {
 		super(leaf);
@@ -31,7 +31,7 @@ export class TaskTimerView extends ItemView {
 	getIcon(): string { return "clock"; }
 
 	readAndClearInputValue(): string {
-		const value =  this.input.getValue();
+		const value = this.input.getValue();
 		this.input.setValue('');
 
 		return value;
@@ -57,7 +57,7 @@ export class TaskTimerView extends ItemView {
 
 	renderBaseElements() {
 		const container = this.getContainer();
-		
+
 		this.controlsEl = container.createDiv();
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
 	}
@@ -65,12 +65,12 @@ export class TaskTimerView extends ItemView {
 	renderControlElements() {
 		const container = this.controlsEl;
 
-    const controls = new Setting(container);
-    this.input = new TextComponent(controls.controlEl)
+		const controls = new Setting(container);
+		this.input = new TextComponent(controls.controlEl)
 			.setPlaceholder("E.g. Buy a milk")
 
-		this.input.inputEl.addEventListener("keyup", ({key}) => {
-			if (key === 'Enter') { 
+		this.input.inputEl.addEventListener("keyup", ({ key }) => {
+			if (key === 'Enter') {
 				this.controller.appendTask(this.readAndClearInputValue());
 			}
 		});
@@ -78,34 +78,34 @@ export class TaskTimerView extends ItemView {
 		this.input.inputEl.classList.add('task-timer-input');
 		this.input.inputEl.setAttr('focus', true);
 
-    this.subBtn = new ButtonComponent(controls.controlEl)
+		this.subBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('play')
 			.setTooltip('Start task')
 			.setClass('task-timer-button')
-      .onClick(async () => {
+			.onClick(async () => {
 				this.controller.appendTask(this.readAndClearInputValue());
-      });
+			});
 
-    this.endBtn = new ButtonComponent(controls.controlEl)
+		this.endBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('pause')
 			.setTooltip('Stop all tasks')
 			.setClass('task-timer-button')
-      .onClick(async () => {
-        this.controller.endAllTasks();
-      });
+			.onClick(async () => {
+				this.controller.endAllTasks();
+			});
 
-    this.startBtn = new ButtonComponent(controls.controlEl)
+		this.startBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('step-forward')
 			.setTooltip('Stop all and start task')
 			.setClass('task-timer-button')
-      .onClick(async () => {
+			.onClick(async () => {
 				this.controller.startNewTask(this.readAndClearInputValue());
-      });
+			});
 	}
 
 	async runInterval() {
 		this.updateView();
-    this.interval = window.setInterval(() => {
+		this.interval = window.setInterval(() => {
 			this.updateView();
 		}, 1000);
 		this.registerInterval(this.interval);
@@ -116,7 +116,7 @@ export class TaskTimerView extends ItemView {
 		this.renderControlElements();
 		this.runInterval();
 
-		if(Platform.isDesktop) {
+		if (Platform.isDesktop) {
 			window.setTimeout(() => {
 				this.input.inputEl.focus();
 			});
@@ -137,11 +137,11 @@ export class TaskTimerView extends ItemView {
 	}
 
 	renderTableAction(container: HTMLElement, task: TaskEntry) {
-    const controls = new Setting(container);
+		const controls = new Setting(container);
 
 		const playButton = new ButtonComponent(controls.controlEl)
 			.setClass('task-timer-button')
-		
+
 		new ButtonComponent(controls.controlEl)
 			.setClass('task-timer-button')
 			.setIcon('pencil')
@@ -188,7 +188,7 @@ export class TaskTimerView extends ItemView {
 		setIcon(spanLabel.createSpan({
 			cls: 'task-timer-item__label-icon'
 		}), isTaskDone(task) ? 'circle-check-big' : 'loader-circle');
-			
+
 		spanLabel.createEl('h3', {
 			text: task.name,
 			cls: 'task-timer-item__label'
@@ -205,8 +205,8 @@ export class TaskTimerView extends ItemView {
 			const body = container.createDiv({
 				cls: [
 					'task-timer-item',
-					isDone 
-						? 'task-timer-item--done' 
+					isDone
+						? 'task-timer-item--done'
 						: 'task-timer-item--running'
 				]
 			});
@@ -229,7 +229,7 @@ export class TaskTimerView extends ItemView {
 			// setIcon(spanLabel.createSpan({
 			// 	cls: 'task-timer-item__label-icon'
 			// }), isDone ? 'circle-check-big' : 'loader-circle')
-			
+
 			// spanLabel.createEl('h3', {
 			// 	text: task.name,
 			// 	cls: 'task-timer-item__label'

@@ -5,7 +5,7 @@ import { TaskEntry, TimekeepTaskEntry } from './types';
 export class TaskStorage {
 	constructor(private app: App) { }
 
-	async loadArchive(url: string): Promise<TaskEntry[]> {		
+	async loadArchive(url: string): Promise<TaskEntry[]> {
 		try {
 			const file = this.app.vault.getFileByPath(url);
 
@@ -36,7 +36,7 @@ export class TaskStorage {
 			if (match && index > -1) {
 				appendContent = content.slice(0, index) +
 					mdContent +
-					content.slice(index + match[0].length);					
+					content.slice(index + match[0].length);
 			} else {
 				appendContent = content + '\n' + mdContent;
 			}
@@ -45,7 +45,7 @@ export class TaskStorage {
 		} else {
 			try {
 				await this.app.vault.createFolder(url.slice(0, url.lastIndexOf('/')));
-			} catch(e) {
+			} catch (e) {
 				console.log(e);
 			}
 			await this.app.vault.create(url, mdContent);
@@ -68,7 +68,7 @@ export class TaskStorage {
 				id: String(Math.random())
 			}
 		}
-		
+
 		return entry;
 	}
 
@@ -79,7 +79,7 @@ export class TaskStorage {
 			if (entry.subEntries?.length) {
 				return this.flattenTimekeepSubEntries(entry.subEntries, entry.name);
 			} else {
-				return [ this.mapTimekeepEntry(entry, name) ];
+				return [this.mapTimekeepEntry(entry, name)];
 			}
 		});
 	}
@@ -90,7 +90,7 @@ export class TaskStorage {
 			const entries: TimekeepTaskEntry[] = data.entries;
 
 			return this.flattenTimekeepSubEntries(entries);
-		} catch(e) {
+		} catch (e) {
 			console.log(e);
 			return [];
 		}

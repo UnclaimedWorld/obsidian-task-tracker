@@ -30,11 +30,11 @@ export class EditTaskModal extends Modal {
 
 	submitForm() {
 		this.controller.updateTask(this.task.id, {
-			startTime: this.taskStartComponent.inputEl.value 
-				? toISO(this.taskStartComponent.inputEl.value) 
+			startTime: this.taskStartComponent.inputEl.value
+				? toISO(this.taskStartComponent.inputEl.value)
 				: '',
-			endTime: this.taskEndComponent.inputEl.value 
-				? toISO(this.taskEndComponent.inputEl.value) 
+			endTime: this.taskEndComponent.inputEl.value
+				? toISO(this.taskEndComponent.inputEl.value)
 				: '',
 			name: this.taskNameComponent.inputEl.value
 		});
@@ -62,8 +62,8 @@ export class EditTaskModal extends Modal {
 			event.preventDefault();
 			this.submitForm();
 		}
-		
-    const textSetting = new Setting(formEl)
+
+		const textSetting = new Setting(formEl)
 			.setName('Task name')
 
 		textSetting.addText(component => {
@@ -92,7 +92,7 @@ export class EditTaskModal extends Modal {
 			const input = component.inputEl;
 			this.taskEndComponent = component;
 
-			input.type = 'datetime-local'; 
+			input.type = 'datetime-local';
 			input.step = '1';
 		});
 

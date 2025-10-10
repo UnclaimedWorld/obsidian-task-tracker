@@ -3,15 +3,15 @@ import { TaskEntry } from './types';
 export function pad(num?: number | null): string {
 	if (!num) return '00';
 
-  return num.toString().padStart(2, '0');
+	return num.toString().padStart(2, '0');
 }
 
 export function formatDuration(ms: number): string {
-  if (ms < 0 || !Number.isFinite(ms)) return "00s";
-  const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
+	if (ms < 0 || !Number.isFinite(ms)) return "00s";
+	const totalSec = Math.floor(ms / 1000);
+	const h = Math.floor(totalSec / 3600);
+	const m = Math.floor((totalSec % 3600) / 60);
+	const s = totalSec % 60;
 
 	let string = '';
 
@@ -24,18 +24,18 @@ export function formatDuration(ms: number): string {
 	}
 
 	string += ` ${pad(s)}s`;
-	
+
 	return string.trim();
 }
 
 export function isoNow(): string {
-  return new Date().toISOString();
+	return new Date().toISOString();
 }
 
 export function parseISO(s?: string | null): Date | null {
-  if (!s) return null;
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
+	if (!s) return null;
+	const d = new Date(s);
+	return isNaN(d.getTime()) ? null : d;
 }
 
 export function toISO(s?: string | null): string {
@@ -56,10 +56,10 @@ export function formatTime(date?: string | null): string {
 }
 
 export function calcOwnDuration(startISO?: string | null, endISO?: string | null): number {
-  const start = parseISO(startISO)?.getTime();
-  const end = (endISO ? parseISO(endISO) : new Date())?.getTime();
-  if (!start || !end) return 0;
-  return Math.max(0, end - start);
+	const start = parseISO(startISO)?.getTime();
+	const end = (endISO ? parseISO(endISO) : new Date())?.getTime();
+	if (!start || !end) return 0;
+	return Math.max(0, end - start);
 }
 
 export function formatDate(format: string, date: string): string {

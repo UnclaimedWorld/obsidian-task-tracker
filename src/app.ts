@@ -12,12 +12,12 @@ export default class TaskTimerPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.controller.loadModel();
 		});
-		
+
 		this.registerView(
 			VIEW_TYPE_TASK_TIMER,
 			(leaf: WorkspaceLeaf) => {
 				const view = new TaskTimerView(leaf, this.controller);
-				
+
 				this.controller.setViewOnce(view);
 
 				return view;
@@ -25,15 +25,15 @@ export default class TaskTimerPlugin extends Plugin {
 		);
 
 		this.addRibbonIcon(
-			"clock", 
-			"Task Timer", 
+			"clock",
+			"Task Timer",
 			() => this.activateView()
 		);
-		
-		this.addCommand({ 
-			id: "open-task-timer", 
-			name: "Open Task Timer", 
-			callback: () => this.activateView() 
+
+		this.addCommand({
+			id: "open-task-timer",
+			name: "Open Task Timer",
+			callback: () => this.activateView()
 		});
 	}
 
