@@ -89,6 +89,12 @@ export default class TaskController {
 		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
 	}
 
+	deleteTask(id: string) {
+		this.model.deleteTaskById(id);
+		this.view.updateView();
+		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+	}
+
 	endAllTasks() {
 		this.model.endAllTasks();
 		this.view.updateView();

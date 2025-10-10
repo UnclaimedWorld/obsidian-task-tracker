@@ -171,18 +171,28 @@ export class TaskTimerView extends ItemView {
 		});
 
 		dateWrapperEl.createSpan({
-			text: formatTime(task.startTime)
+			text: `${formatTime(task.startTime)} - `
 		});
 
-		if (isTaskDone(task)) {
-			dateWrapperEl.createSpan({
-				text: ' - ',
-			});
+		dateWrapperEl.createSpan({
+			text: formatDuration(calcOwnDuration(task.startTime, task.endTime)),
+			cls: 'task-timer-item__date'
+		});
+	}
 
-			dateWrapperEl.createSpan({
-				text: formatTime(task.endTime)
-			});
-		}
+	private renderLabel(container: HTMLElement, task: TaskEntry) {
+		const spanLabel = container.createDiv({
+			cls: 'task-timer-item__label-text'
+		});
+
+		setIcon(spanLabel.createSpan({
+			cls: 'task-timer-item__label-icon'
+		}), isTaskDone(task) ? 'circle-check-big' : 'loader-circle');
+			
+		spanLabel.createEl('h3', {
+			text: task.name,
+			cls: 'task-timer-item__label'
+		});
 	}
 
 	private renderArchiveTable() {
@@ -193,41 +203,43 @@ export class TaskTimerView extends ItemView {
 			const isDone = isTaskDone(task);
 
 			const body = container.createDiv({
-				cls: 'task-timer-item'
-			});
-
-			const labelEl = body.createDiv({
 				cls: [
-					'task-timer-item__label-wrap',
+					'task-timer-item',
 					isDone 
-						? 'task-timer-item__label-wrap--done' 
-						: 'task-timer-item__label-wrap--running'
+						? 'task-timer-item--done' 
+						: 'task-timer-item--running'
 				]
 			});
 
-			const spanLabel = labelEl.createDiv({
-				cls: 'task-timer-item__label-text'
-			});
+			this.renderLabel(body, task);
 
-			setIcon(spanLabel.createSpan({
-				cls: 'task-timer-item__label-icon'
-			}), isDone ? 'circle-check-big' : 'loader-circle')
+			// const labelEl = body.createDiv({
+			// 	cls: [
+			// 		'task-timer-item__label-wrap',
+			// 		isDone 
+			// 			? 'task-timer-item__label-wrap--done' 
+			// 			: 'task-timer-item__label-wrap--running'
+			// 	]
+			// });
+
+			// const spanLabel = body.createDiv({
+			// 	cls: 'task-timer-item__label-text'
+			// });
+
+			// setIcon(spanLabel.createSpan({
+			// 	cls: 'task-timer-item__label-icon'
+			// }), isDone ? 'circle-check-big' : 'loader-circle')
 			
-			spanLabel.createEl('h3', {
-				text: task.name,
-				cls: 'task-timer-item__label'
-			});
+			// spanLabel.createEl('h3', {
+			// 	text: task.name,
+			// 	cls: 'task-timer-item__label'
+			// });
 
-			this.renderTime(labelEl, task);
+			this.renderTime(body, task);
 
 			const bottomRow = body.createDiv({
 				cls: 'task-timer-item__date-wrap'
 			})
-
-			bottomRow.createSpan({
-				text: formatDuration(calcOwnDuration(task.startTime, task.endTime)),
-				cls: 'task-timer-item__date'
-			});
 
 			this.renderTableAction(bottomRow, task);
 

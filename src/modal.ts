@@ -99,13 +99,16 @@ export class EditTaskModal extends Modal {
 		this.updateView();
 
 		new Setting(formEl)
-			.addButton(resetButton => {
-				const button = resetButton.buttonEl;
+			.addButton(deleteButton => {
+				const button = deleteButton.buttonEl;
 
-				resetButton
-					.setButtonText('Reset form')
-					.onClick(this.updateView.bind(this));
+				deleteButton
+					.setButtonText('Delete task(Double click)');
 
+				button.ondblclick = () => {
+					this.controller.deleteTask(this.task.id)
+					this.close();
+				};
 				button.type = 'button';
 			})
 			.addButton(submitButton => {

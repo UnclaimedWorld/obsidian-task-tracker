@@ -49,6 +49,10 @@ export class TimerModel {
     this.archive.set(root.id, root);
 	}
 
+	deleteTaskById(id: string) {
+		this.archive.delete(id);
+	}
+
   endTaskById(id: string) {
 		const task = this.archive.get(id);
 
