@@ -2,21 +2,24 @@ import { App, TAbstractFile, TFile } from 'obsidian';
 import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
-import { getArchiveFileName } from './utils';
 import { TaskForm } from './types';
 
 export default class TaskController {
 	private view: TaskTimerView
 	private model: TimerModel
 	private storage!: TaskStorage
-	private archiveUrl: string;
+	private archiveFolderUrl = 'Достижения';
+	private archiveFileName = `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
 	isContentLoaded = false;
 	isLayoutOpened = false;
 
 	constructor(private app: App) {
-		this.updateArchiveUrl();
 		this.storage = new TaskStorage(this.app);
 		this.model = new TimerModel();
+	}
+
+	getPluginFiles() {
+		return this.storage.getPluginFiles(this.archiveFolderUrl);
 	}
 
 	getTasks() {
@@ -27,22 +30,18 @@ export default class TaskController {
 		return this.model.getFlatRunningTasks()
 	}
 
-	updateArchiveUrl() {
-		this.archiveUrl = `Достижения/${getArchiveFileName()}`;
+	getArchiveUrl() {
+		return `${this.archiveFolderUrl}/${this.getArchiveFileName()}`;
 	}
 
-	// TODO Пока что не работает
-	async updateArchiveUrlAndReloadModel() {
-		const oldArchiveUrl = this.archiveUrl;
-		this.updateArchiveUrl();
-
-		if (this.archiveUrl !== oldArchiveUrl) {
-			await this.loadModel();
-		}
+	async updateArchiveUrl(fileName: string) {
+		this.archiveFileName = fileName;
+		await this.loadArchive();
+		this.view.updateView();
 	}
 
 	async loadArchive() {
-		const archive = await this.storage.loadArchive(this.archiveUrl);
+		const archive = await this.storage.loadArchive(this.getArchiveUrl());
 		this.model.initModel(archive);
 		this.isContentLoaded = true;
 	}
@@ -53,7 +52,7 @@ export default class TaskController {
 	}
 
 	modifyHandler(file: TAbstractFile) {
-		if (file instanceof TFile && file.path === this.archiveUrl) {
+		if (file instanceof TFile && file.path === this.getArchiveUrl()) {
 			this.loadArchive();
 		}
 	}
@@ -67,9 +66,12 @@ export default class TaskController {
 
 	async openView() {
 		if (this.isContentLoaded && this.view?.opened) {
-			this.updateArchiveUrlAndReloadModel();
 			this.view.renderView();
 		}
+	}
+
+	getArchiveFileName() {
+		return this.archiveFileName;
 	}
 
 	startNewTask(name: string) {
@@ -80,30 +82,30 @@ export default class TaskController {
 	appendTask(name: string) {
 		this.model.appendTask(name);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	updateTask(id: string, taskForm: TaskForm) {
 		this.model.updateTaskById(id, taskForm);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	deleteTask(id: string) {
 		this.model.deleteTaskById(id);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	endAllTasks() {
 		this.model.endAllTasks();
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	endTask(id: string) {
 		this.model.endTaskById(id);
 		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.archiveUrl);
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 }

@@ -1,9 +1,29 @@
 import { App, TFile } from "obsidian";
 import { TaskEntry, TimekeepTaskEntry } from './types';
+import { isFileForPlugin } from './utils';
 
 
 export class TaskStorage {
 	constructor(private app: App) { }
+
+	getPluginFiles(url: string): string[] {
+		try {
+			const folder = this.app.vault.getFolderByPath(url);
+
+			if (!folder) return [];
+
+			return folder.children.reduce<string[]>((names, file) => {
+				if (isFileForPlugin(file.name)) {
+					names.push(file.name);
+				}
+
+				return names;
+			}, []);
+		} catch (e) {
+			console.error(e);
+			return [];
+		}
+	}
 
 	async loadArchive(url: string): Promise<TaskEntry[]> {
 		try {

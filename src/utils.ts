@@ -1,5 +1,7 @@
 import { TaskEntry } from './types';
 
+export const fileNameRegex = /\d{4}-\d{2}-\d{2}_CUSTOM\.md/;
+
 export function pad(num?: number | null): string {
 	if (!num) return '00';
 
@@ -66,8 +68,10 @@ export function formatDate(format: string, date: string): string {
 	return window.moment(date).format(format);
 }
 
-export function getArchiveFileName() {
-	return `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
+export function isFileForPlugin(fileName: string): boolean {
+	const match = fileName.match(fileNameRegex);
+
+	return !!match;
 }
 
 export function isTaskDone(task: TaskEntry): boolean {

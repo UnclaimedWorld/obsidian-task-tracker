@@ -30,17 +30,6 @@ export class TaskTimerView extends ItemView {
 	getDisplayText(): string { return "Task Timer"; }
 	getIcon(): string { return "clock"; }
 
-	readAndClearInputValue(): string {
-		const value = this.input.getValue();
-		this.input.setValue('');
-
-		return value;
-	}
-
-	updateView() {
-		this.renderArchiveTable();
-	}
-
 	getContainer(): HTMLElement {
 		const container = this.containerEl;
 		container.empty();
@@ -55,14 +44,79 @@ export class TaskTimerView extends ItemView {
 		this.editModalInstance.openModal(task);
 	}
 
-	renderBaseElements() {
+	renderView() {
+		this.renderBaseElements();
+		this.renderControlElements();
+		this.runInterval();
+
+		if (Platform.isDesktop) {
+			window.setTimeout(() => {
+				this.input.inputEl.focus();
+			});
+		}
+	}
+
+	private async runInterval() {
+		this.updateView();
+		this.interval = window.setInterval(() => {
+			this.updateView();
+		}, 1000);
+		this.registerInterval(this.interval);
+	}
+
+	async onOpen() {
 		const container = this.getContainer();
+		container.classList.add('task-timer-container');
+
+		this.opened = true;
+		this.controller.openView();
+	}
+
+	async onClose() {
+		this.opened = false;
+
+		if (this.interval) window.clearInterval(this.interval);
+	}
+
+	private readAndClearInputValue(): string {
+		const value = this.input.getValue();
+		this.input.setValue('');
+
+		return value;
+	}
+
+	updateView() {
+		this.renderArchiveTable();
+	}
+
+	private renderBaseElements() {
+		const container = this.getContainer();
+
+		new Setting(container)
+			.addDropdown(dropdown => {
+				const options = this.controller
+					.getPluginFiles()
+					.reduce<Record<string, string>>(
+						(options, name) => {
+							options[name] = name;
+
+							return options;
+						}, {}
+					);
+
+				dropdown
+					.addOptions(options)
+					.setValue(this.controller.getArchiveFileName())
+					.onChange(async (value) => {
+						this.controller.updateArchiveUrl(value);
+					});
+			});
 
 		this.controlsEl = container.createDiv();
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
 	}
 
-	renderControlElements() {
+	private renderControlElements() {
 		const container = this.controlsEl;
 
 		const controls = new Setting(container);
@@ -76,7 +130,6 @@ export class TaskTimerView extends ItemView {
 		});
 
 		this.input.inputEl.classList.add('task-timer-input');
-		this.input.inputEl.setAttr('focus', true);
 
 		this.subBtn = new ButtonComponent(controls.controlEl)
 			.setIcon('play')
@@ -103,42 +156,11 @@ export class TaskTimerView extends ItemView {
 			});
 	}
 
-	async runInterval() {
-		this.updateView();
-		this.interval = window.setInterval(() => {
-			this.updateView();
-		}, 1000);
-		this.registerInterval(this.interval);
-	}
-
-	renderView() {
-		this.renderBaseElements();
-		this.renderControlElements();
-		this.runInterval();
-
-		if (Platform.isDesktop) {
-			window.setTimeout(() => {
-				this.input.inputEl.focus();
-			});
-		}
-	}
-
-	async onOpen() {
-		const container = this.getContainer();
-		container.classList.add('task-timer-container');
-
-		this.opened = true;
-		this.controller.openView();
-	}
-
-	async onClose() {
-		this.opened = false;
-		if (this.interval) window.clearInterval(this.interval);
-	}
-
-	renderTableAction(container: HTMLElement, task: TaskEntry) {
-		const controls = new Setting(container);
-
+	private renderTableAction(container: HTMLElement, task: TaskEntry) {
+		const bottomRow = container.createDiv({
+			cls: 'task-timer-item__date-wrap'
+		})
+		const controls = new Setting(bottomRow);
 		const playButton = new ButtonComponent(controls.controlEl)
 			.setClass('task-timer-button')
 
@@ -165,7 +187,7 @@ export class TaskTimerView extends ItemView {
 		}
 	}
 
-	renderTime(container: HTMLElement, task: TaskEntry) {
+	private renderTime(container: HTMLElement, task: TaskEntry) {
 		const dateWrapperEl = container.createEl('p', {
 			cls: 'task-timer-item__time'
 		});
@@ -195,57 +217,30 @@ export class TaskTimerView extends ItemView {
 		});
 	}
 
+	private renderRow(task: TaskEntry) {
+		const container = this.archiveTableEl;
+		const isDone = isTaskDone(task);
+		const body = container.createDiv({
+			cls: [
+				'task-timer-item',
+				isDone
+					? 'task-timer-item--done'
+					: 'task-timer-item--running'
+			]
+		});
+
+		this.renderLabel(body, task);
+		this.renderTime(body, task);
+		this.renderTableAction(body, task);
+		body.createEl('hr', { cls: 'task-timer-item__delimiter' });
+	}
+
 	private renderArchiveTable() {
 		const container = this.archiveTableEl;
 		container.empty();
 
-		const renderRow = (task: TaskEntry) => {
-			const isDone = isTaskDone(task);
-
-			const body = container.createDiv({
-				cls: [
-					'task-timer-item',
-					isDone
-						? 'task-timer-item--done'
-						: 'task-timer-item--running'
-				]
-			});
-
-			this.renderLabel(body, task);
-
-			// const labelEl = body.createDiv({
-			// 	cls: [
-			// 		'task-timer-item__label-wrap',
-			// 		isDone 
-			// 			? 'task-timer-item__label-wrap--done' 
-			// 			: 'task-timer-item__label-wrap--running'
-			// 	]
-			// });
-
-			// const spanLabel = body.createDiv({
-			// 	cls: 'task-timer-item__label-text'
-			// });
-
-			// setIcon(spanLabel.createSpan({
-			// 	cls: 'task-timer-item__label-icon'
-			// }), isDone ? 'circle-check-big' : 'loader-circle')
-
-			// spanLabel.createEl('h3', {
-			// 	text: task.name,
-			// 	cls: 'task-timer-item__label'
-			// });
-
-			this.renderTime(body, task);
-
-			const bottomRow = body.createDiv({
-				cls: 'task-timer-item__date-wrap'
-			})
-
-			this.renderTableAction(bottomRow, task);
-
-			body.createEl('hr', { cls: 'task-timer-item__delimiter' });
-		};
-
-		for (const e of this.controller.getTasks()) renderRow(e);
+		for (const task of this.controller.getTasks()) {
+			this.renderRow(task);
+		}
 	}
 }
