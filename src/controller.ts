@@ -1,4 +1,4 @@
-import { App, TAbstractFile, TFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
@@ -19,53 +19,26 @@ export default class TaskController {
 	}
 
 	getPluginFiles() {
-		return this.storage.getPluginFiles(this.archiveFolderUrl);
-	}
+		const pluginFiles = this.storage.getPluginFiles(this.archiveFolderUrl);
 
-	getTasks() {
-		return this.model.getFlatTasks().filter(task => !task.parentId);
-	}
-
-	populateSubtasks(task: TaskEntry): TaskEntry[] {
-		return this.model.getSubTasks(task);
-	}
-
-	getRunningTasks() {
-		return this.model.getFlatRunningTasks()
-	}
-
-	getArchiveUrl() {
-		return `${this.archiveFolderUrl}/${this.getArchiveFileName()}`;
-	}
-
-	async updateArchiveUrl(fileName: string) {
-		this.archiveFileName = fileName;
-		await this.loadArchive();
-		this.view.updateView();
-	}
-
-	async loadArchive() {
-		const archive = await this.storage.loadArchive(this.getArchiveUrl());
-		this.model.initModel(archive);
-		this.isContentLoaded = true;
-	}
-
-	async loadModel() {
-		await this.loadArchive();
-		this.openView();
-	}
-
-	modifyHandler(file: TAbstractFile) {
-		if (file instanceof TFile && file.path === this.getArchiveUrl()) {
-			this.loadArchive();
+		if (!pluginFiles.includes(this.archiveFileName)) {
+			pluginFiles.unshift(this.archiveFileName);
 		}
+		
+		return pluginFiles;
 	}
+
+	// VIEW
 
 	async setViewOnce(view: TaskTimerView) {
 		this.view = view;
 		this.openView();
 
-		this.view.registerEvent(this.app.vault.on('modify', this.modifyHandler.bind(this)));
+		this.view.registerEvent(this.app.vault.on('modify', file => {
+			if (file instanceof TFile && file.path === this.getArchiveUrl()) {
+				this.loadArchive();
+			}
+		}));
 	}
 
 	async openView() {
@@ -74,8 +47,45 @@ export default class TaskController {
 		}
 	}
 
+	// ARCHIVE
+
 	getArchiveFileName() {
 		return this.archiveFileName;
+	}
+
+	getArchiveUrl() {
+		return `${this.archiveFolderUrl}/${this.getArchiveFileName()}`;
+	}
+
+	async loadArchive() {
+		const archive = await this.storage.loadArchive(this.getArchiveUrl());
+		this.model.initModel(archive);
+		this.isContentLoaded = true;
+	}
+
+	async updateArchiveUrl(fileName: string) {
+		this.archiveFileName = fileName;
+		await this.loadArchive();
+		this.view.updateView();
+	}
+
+	async loadModel() {
+		await this.loadArchive();
+		this.openView();
+	}
+
+	// TASKS
+
+	getTasks() {
+		return this.model.getFlatTasks().filter(task => !task.parentId);
+	}
+
+	getRunningTasks() {
+		return this.model.getFlatRunningTasks()
+	}
+
+	populateSubtasks(task: TaskEntry): TaskEntry[] {
+		return this.model.getSubTasks(task);
 	}
 
 	startNewTask(name: string) {
