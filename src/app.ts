@@ -8,6 +8,7 @@
 // TODO
 // Settings
 // Custom file path
+// Translation
 
 // Maybe
 // Tags. I don't know. Seems sub tasks can solve this problem with tags like [SC], [WK].

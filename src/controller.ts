@@ -66,7 +66,7 @@ export default class TaskController {
 	async updateArchiveUrl(fileName: string) {
 		this.archiveFileName = fileName;
 		await this.loadArchive();
-		this.view.updateView();
+		this.view.renderArchiveTable();
 	}
 
 	async loadModel() {
@@ -75,6 +75,10 @@ export default class TaskController {
 	}
 
 	// TASKS
+
+	getTaskById(id: string): TaskEntry | null {
+		return this.model.getTaskById(id);
+	}
 
 	getTasks() {
 		return this.model.getFlatTasks().filter(task => !task.parentId);
@@ -95,7 +99,7 @@ export default class TaskController {
 	}
 
 	updateAndSave() {
-		this.view.updateView();
+		this.view.renderArchiveTable();
 		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 

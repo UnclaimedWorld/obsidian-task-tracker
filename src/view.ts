@@ -19,6 +19,8 @@ export class TaskTimerView extends ItemView {
 	private editModalInstance: EditTaskModal | null;
 	opened = false;
 
+	private taskTimeEls: Map<string, HTMLElement> = new Map();
+
 	constructor(
 		leaf: WorkspaceLeaf,
 		private controller: TaskController
@@ -47,6 +49,7 @@ export class TaskTimerView extends ItemView {
 	renderView() {
 		this.renderBaseElements();
 		this.renderControlElements();
+		this.renderArchiveTable();
 		this.runInterval();
 
 		if (Platform.isDesktop) {
@@ -57,7 +60,6 @@ export class TaskTimerView extends ItemView {
 	}
 
 	private async runInterval() {
-		this.updateView();
 		this.interval = window.setInterval(() => {
 			this.updateView();
 		}, 1000);
@@ -74,6 +76,7 @@ export class TaskTimerView extends ItemView {
 
 	async onClose() {
 		this.opened = false;
+		this.taskTimeEls = new Map();
 
 		if (this.interval) window.clearInterval(this.interval);
 	}
@@ -86,7 +89,13 @@ export class TaskTimerView extends ItemView {
 	}
 
 	updateView() {
-		this.renderArchiveTable();
+		this.taskTimeEls.forEach((timeEl, key) => {
+			const task = this.controller.getTaskById(key);
+
+			if (task) {
+				timeEl.innerText = this.renderTimeText(task);
+			}
+		});
 	}
 
 	private renderBaseElements() {
@@ -207,10 +216,14 @@ export class TaskTimerView extends ItemView {
 			text: `${formatTime(task.startTime)} - `
 		});
 
-		dateWrapperEl.createSpan({
-			text: formatDuration(calcOwnDuration(task.startTime, task.endTime)),
+		this.taskTimeEls.set(task.id, dateWrapperEl.createSpan({
+			text: this.renderTimeText(task),
 			cls: 'task-timer-item__date'
-		});
+		}));
+	}
+
+	private renderTimeText(task: TaskEntry) {
+		return formatDuration(calcOwnDuration(task.startTime, task.endTime))
 	}
 
 	private renderLabel(container: HTMLElement, task: TaskEntry) {
@@ -253,9 +266,10 @@ export class TaskTimerView extends ItemView {
 			.forEach(task => this.renderRow(task));
 	}
 
-	private renderArchiveTable() {
+	renderArchiveTable() {
 		const container = this.archiveTableEl;
 		container.empty();
+		this.taskTimeEls = new Map();
 
 		for (const task of this.controller.getTasks()) {
 			this.renderRow(task);
