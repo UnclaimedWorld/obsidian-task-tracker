@@ -167,7 +167,7 @@ export class TaskTimerView extends ItemView {
 
 	private renderTableAction(container: HTMLElement, task: TaskEntry) {
 		const bottomRow = container.createDiv({
-			cls: 'task-timer-item__date-wrap'
+			cls: 'task-timer-item__time-wrap'
 		})
 		const controls = new Setting(bottomRow);
 
@@ -218,7 +218,7 @@ export class TaskTimerView extends ItemView {
 
 		this.taskTimeEls.set(task.id, dateWrapperEl.createSpan({
 			text: this.renderTimeText(task),
-			cls: 'task-timer-item__date'
+			cls: 'task-timer-item__time'
 		}));
 	}
 
@@ -228,7 +228,7 @@ export class TaskTimerView extends ItemView {
 
 	private renderLabel(container: HTMLElement, task: TaskEntry) {
 		const spanLabel = container.createDiv({
-			cls: 'task-timer-item__label-text'
+			cls: 'task-timer-item__label'
 		});
 
 		if (!isTaskSub(task)) {
@@ -239,7 +239,7 @@ export class TaskTimerView extends ItemView {
 
 		spanLabel.createEl('h3', {
 			text: task.name,
-			cls: 'task-timer-item__label'
+			cls: 'task-timer-item__label-text'
 		});
 	}
 
