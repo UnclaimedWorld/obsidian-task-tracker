@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App, Notice, TFile } from 'obsidian';
 import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
@@ -90,6 +90,15 @@ export default class TaskController {
 
 	populateSubtasks(task: TaskEntry): TaskEntry[] {
 		return this.model.getSubTasks(task);
+	}
+
+	async copyTaskName(task: TaskEntry) {
+		try {
+			await navigator.clipboard.writeText(task.name);
+			new Notice('Task name copied to a clipboard', 1500);
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+		}
 	}
 
 	startNewTask(name: string) {

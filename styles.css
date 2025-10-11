@@ -53,6 +53,7 @@
 
 .task-timer-item__label {
 	grid-area: label;
+	cursor: pointer;
 
 	svg {
 		color: var(--task-result-color);
@@ -86,12 +87,12 @@
 	color: var(--text-muted);
 }
 
-.task-timer-item__time {
+.task-timer-item__time-wrap {
 	margin: 0;
 	grid-area: time;
 }
 
-.task-timer-item__time-wrap {
+.task-timer-item__actions {
 	display: flex;
 	align-items: start;
 	justify-content: flex-end;

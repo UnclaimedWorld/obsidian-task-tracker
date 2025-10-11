@@ -56,7 +56,7 @@ export class EditTaskModal extends Modal {
 		contentEl.createEl('h2', {
 			text: 'Edit task',
 		})
-			.style = 'margin-top: 0;';
+			.style.marginTop = '0';
 
 		const formEl = contentEl.createEl('form');
 
