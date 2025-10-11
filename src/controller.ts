@@ -24,7 +24,7 @@ export default class TaskController {
 		if (!pluginFiles.includes(this.archiveFileName)) {
 			pluginFiles.unshift(this.archiveFileName);
 		}
-		
+
 		return pluginFiles;
 	}
 
@@ -90,42 +90,42 @@ export default class TaskController {
 
 	startNewTask(name: string) {
 		this.model.endAllTasks();
-		this.appendTask(name);
+		this.model.appendTask(name);
+		this.updateAndSave();
+	}
+
+	updateAndSave() {
+		this.view.updateView();
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	startSubTask(taskId: string, name?: string) {
 		this.model.createSubTask(taskId, name);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 
 	appendTask(name: string) {
 		this.model.appendTask(name);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 
 	updateTask(id: string, taskForm: TaskForm) {
 		this.model.updateTaskById(id, taskForm);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 
 	deleteTask(id: string) {
 		this.model.deleteTaskById(id);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 
 	endAllTasks() {
 		this.model.endAllTasks();
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 
 	endTask(id: string) {
 		this.model.endTaskById(id);
-		this.view.updateView();
-		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
+		this.updateAndSave();
 	}
 }

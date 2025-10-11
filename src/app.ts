@@ -1,3 +1,16 @@
+// DONE
+// Task creation
+// Task edit
+// Task delete
+// Sub task
+// Select custom archives
+
+// TODO
+// Settings
+// Custom file path
+
+// Maybe
+// Tags. I don't know. Seems sub tasks can solve this problem with tags like [SC], [WK].
 
 import { Platform, Plugin, WorkspaceLeaf } from "obsidian";
 import { TaskTimerView, VIEW_TYPE_TASK_TIMER } from "./view";
