@@ -2,7 +2,7 @@ import { App, TAbstractFile, TFile } from 'obsidian';
 import { TimerModel } from "./model";
 import { TaskTimerView } from './view';
 import { TaskStorage } from './storage';
-import { TaskForm } from './types';
+import { TaskEntry, TaskForm } from './types';
 
 export default class TaskController {
 	private view: TaskTimerView
@@ -23,7 +23,11 @@ export default class TaskController {
 	}
 
 	getTasks() {
-		return this.model.getFlatTasks()
+		return this.model.getFlatTasks().filter(task => !task.parentId);
+	}
+
+	populateSubtasks(task: TaskEntry): TaskEntry[] {
+		return this.model.getSubTasks(task);
 	}
 
 	getRunningTasks() {
@@ -77,6 +81,12 @@ export default class TaskController {
 	startNewTask(name: string) {
 		this.model.endAllTasks();
 		this.appendTask(name);
+	}
+
+	startSubTask(taskId: string, name?: string) {
+		this.model.createSubTask(taskId, name);
+		this.view.updateView();
+		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
 	appendTask(name: string) {

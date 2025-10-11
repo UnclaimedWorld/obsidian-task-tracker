@@ -1,10 +1,7 @@
 .task-timer-container {
+  container-type: inline-size;
 	overflow-y: hidden;
 	padding: var(--size-4-3) var(--size-4-3) var(--size-4-8);
-}
-
-.task-timer-container {
-  container-type: inline-size;
 
 	.setting-item-info  {
 		display: none;
@@ -35,15 +32,19 @@
 }
 
 .task-timer-item {
+	padding: var(--size-4-2) 0;
 	display: grid;
 	align-items: flex-start;
 	align-self: flex-start;
 	grid-template-columns: repeat(5, 1fr);
-	grid-template-rows: auto auto calc(var(--hr-thickness) + var(--size-4-2));
+	grid-template-rows: auto auto;
 	grid-template-areas:
 		"label label label action action"
-		"time time time action action"
-		"delimiter delimiter delimiter delimiter delimiter";
+		"time time time action action";
+}
+
+.task-timer-item + .task-timer-item {
+	border-top: var(--hr-thickness) solid var(--hr-color);
 }
 
 .task-timer-item:last-child {
@@ -64,14 +65,23 @@
 
 .task-timer-item__label-text {
 	grid-area: label;
+
+	svg {
+		color: var(--task-result-color);
+	}
 }
 
-.task-timer-item--running .task-timer-item__label-text svg {
-	color: var(--text-warning);
+.task-timer-item--running {
+	--task-result-color: var(--text-warning);
 }
 
-.task-timer-item--done .task-timer-item__label-text svg {
-	color: var(--text-success);
+.task-timer-item--done {
+	--task-result-color: var(--text-success);
+}
+
+.task-timer-item--subtask {
+	padding-left: var(--size-4-2);
+	border-left: var(--size-4-1) solid var(--task-result-color);
 }
 
 .task-timer-item__label {
@@ -91,11 +101,6 @@
 .task-timer-item__time {
 	margin: 0;
 	grid-area: time;
-}
-
-.task-timer-item__delimiter {
-	margin: 0 0 var(--size-4-2) 0;
-	grid-area: delimiter;
 }
 
 .task-timer-item__date-wrap {
@@ -119,6 +124,11 @@
 .task-timer-title {
 	margin-top: 0;
 	margin-bottom: var(--size-4-5);
+}
+
+.task-timer-action {
+	width: calc(30% - var(--size-4-2)) !important;
+	flex-grow: 1;
 }
 
 .is-mobile,

@@ -3,13 +3,8 @@ export type TaskEntry = {
 	name: string;
 	startTime: string;         // ISO
 	endTime?: string | null;   // ISO
-};
-
-export type TimekeepTaskEntry = {
-	name: string;
-	startTime: string;         // ISO
-	endTime?: string | null;   // ISO
-	subEntries: TimekeepTaskEntry[] | null;
+	subEntries?: string[];
+	parentId?: string;
 };
 
 export type TaskForm = {

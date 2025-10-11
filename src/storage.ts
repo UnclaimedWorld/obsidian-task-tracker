@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { TaskEntry, TimekeepTaskEntry } from './types';
+import { TaskEntry } from './types';
 import { isFileForPlugin } from './utils';
 
 
@@ -35,7 +35,11 @@ export class TaskStorage {
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
 			if (!match) return [];
 
-			return this.fromTimekeepFormat(match[1]);
+			
+			const data = JSON.parse(match[1]);
+			const entries: TaskEntry[] = data.entries;
+
+			return entries;
 		} catch (e) {
 			console.error(e);
 			return [];
@@ -43,7 +47,9 @@ export class TaskStorage {
 	}
 
 	async saveArchive(tasks: TaskEntry[], url: string): Promise<void> {
-		const data = this.toTimekeepFormatJSON(tasks);
+		const data = JSON.stringify({
+			entries: tasks
+		});
 		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
 
 		const file = this.app.vault.getAbstractFileByPath(url);
@@ -69,50 +75,6 @@ export class TaskStorage {
 				console.log(e);
 			}
 			await this.app.vault.create(url, mdContent);
-		}
-	}
-
-	toTimekeepFormatJSON(tasks: TaskEntry[]): string {
-		return JSON.stringify({
-			entries: tasks
-		});
-	}
-
-	mapTimekeepEntry(entry: TimekeepTaskEntry | TaskEntry, name?: string): TaskEntry {
-		if ('subEntries' in entry) {
-			const { subEntries: _, ...task } = entry;
-
-			return {
-				...task,
-				name: name && !name.startsWith('Part') ? name : task.name,
-				id: String(Math.random())
-			}
-		}
-
-		return entry;
-	}
-
-	flattenTimekeepSubEntries(tasks: TimekeepTaskEntry[] | null, name?: string): TaskEntry[] {
-		if (!tasks?.length) return [];
-
-		return tasks.flatMap(entry => {
-			if (entry.subEntries?.length) {
-				return this.flattenTimekeepSubEntries(entry.subEntries, entry.name);
-			} else {
-				return [this.mapTimekeepEntry(entry, name)];
-			}
-		});
-	}
-
-	fromTimekeepFormat(json: string): TaskEntry[] {
-		try {
-			const data = JSON.parse(json);
-			const entries: TimekeepTaskEntry[] = data.entries;
-
-			return this.flattenTimekeepSubEntries(entries);
-		} catch (e) {
-			console.log(e);
-			return [];
 		}
 	}
 }

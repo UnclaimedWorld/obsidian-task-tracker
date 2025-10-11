@@ -1,5 +1,5 @@
 import { Archive, TaskEntry, TaskForm } from './types';
-import { isoNow } from './utils';
+import { isoNow, sortTasks } from './utils';
 
 export class TimerModel {
 	archive: Archive;
@@ -16,10 +16,31 @@ export class TimerModel {
 	}
 
 	getFlatTasks(): TaskEntry[] {
-		return Array.from(this.archive.values()).sort((a, b) => {
-			if (a.startTime < b.startTime) return 1;
-			return -1;
-		});
+		const archive = Array.from(this.archive.values());
+		sortTasks(archive);
+
+		return archive;
+	}
+
+	getSubTasks(task: TaskEntry) {
+		if (!task.subEntries) return [];
+
+		const entries = task.subEntries.reduce<TaskEntry[]>((tasks, taskId) => {
+			const task = this.getTaskById(taskId);
+
+			if (task) {
+				tasks.push(task);
+			}
+
+			return tasks;
+		}, []) || [];
+		sortTasks(entries);
+		
+		return entries;
+	}
+
+	getTaskById(id: string): TaskEntry | null {
+		return this.archive.get(id) || null;
 	}
 
 	getFlatRunningTasks(): TaskEntry[] {
@@ -27,7 +48,7 @@ export class TimerModel {
 	}
 
 	getTaskName(name?: string): string {
-		if (!name?.trim()) name = `Block ${this.getFlatTasks().length + 1}`;
+		if (!name?.trim()) name = `Task ${this.getFlatTasks().length + 1}`;
 
 		return name;
 	}
@@ -43,10 +64,29 @@ export class TimerModel {
 		};
 	}
 
-	appendTask(name: string) {
+	appendTask(name?: string) {
 		const root: TaskEntry = this.getNewTask(name);
 
 		this.archive.set(root.id, root);
+	}
+
+	createSubTask(parentId: string, name?: string) {
+		const parentTask = this.archive.get(parentId);
+
+		if (!parentTask) {
+			// TODO Обработка ошибок. Возможно, уведомление
+			return;
+		}
+
+		if (!parentTask.subEntries) {
+			parentTask.subEntries = [];
+		}
+
+		const subTask = this.getNewTask(name);
+		subTask.parentId = parentId;
+		parentTask.subEntries.unshift(subTask.id);
+
+		this.archive.set(subTask.id, subTask);
 	}
 
 	deleteTaskById(id: string) {

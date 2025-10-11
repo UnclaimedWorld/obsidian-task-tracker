@@ -77,3 +77,14 @@ export function isFileForPlugin(fileName: string): boolean {
 export function isTaskDone(task: TaskEntry): boolean {
 	return !!task.endTime;
 }
+
+export function isTaskSub(task: TaskEntry): boolean {
+	return !!task.parentId;
+}
+
+export function sortTasks(tasks: TaskEntry[]) {
+	tasks.sort((a, b) => {
+		if (a.startTime < b.startTime) return 1;
+		return -1;
+	});
+}

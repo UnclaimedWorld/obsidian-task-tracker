@@ -23,9 +23,10 @@ export class EditTaskModal extends Modal {
 	}
 
 	updateView() {
+		const dateFormat = 'YYYY-MM-DDTHH:mm:ss';
 		this.taskNameComponent.setValue(this.task.name);
-		this.taskStartComponent.inputEl.value = formatDate('YYYY-MM-DDTHH:mm:ss', this.task.startTime);
-		this.taskEndComponent.inputEl.value = this.task.endTime ? formatDate('YYYY-MM-DDTHH:mm:ss', this.task.endTime) : '';
+		this.taskStartComponent.inputEl.value = formatDate(dateFormat, this.task.startTime);
+		this.taskEndComponent.inputEl.value = this.task.endTime ? formatDate(dateFormat, this.task.endTime) : '';
 	}
 
 	submitForm() {
@@ -54,7 +55,8 @@ export class EditTaskModal extends Modal {
 
 		contentEl.createEl('h2', {
 			text: 'Edit task',
-		}).style = 'margin-top: 0;';
+		})
+			.style = 'margin-top: 0;';
 
 		const formEl = contentEl.createEl('form');
 
