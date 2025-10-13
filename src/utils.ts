@@ -82,6 +82,10 @@ export function isTaskSub(task: TaskEntry): boolean {
 	return !!task.parentId;
 }
 
+export function isTaskProject(task: TaskEntry): boolean {
+	return task.endTime === task.startTime;
+}
+
 export function sortTasks(tasks: TaskEntry[]) {
 	tasks.sort((a, b) => {
 		if (a.startTime < b.startTime) return 1;

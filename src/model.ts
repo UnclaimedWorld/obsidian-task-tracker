@@ -64,6 +64,13 @@ export class TimerModel {
 		};
 	}
 
+	appendProject(name?: string) {
+		const root: TaskEntry = this.getNewTask(name);
+		root.endTime = root.startTime;
+
+		this.archive.set(root.id, root);
+	}
+
 	appendTask(name?: string) {
 		const root: TaskEntry = this.getNewTask(name);
 
@@ -87,6 +94,17 @@ export class TimerModel {
 		parentTask.subEntries.unshift(subTask.id);
 
 		this.archive.set(subTask.id, subTask);
+	}
+
+	deleteSubtasksById(id: string) {
+		const parentTask = this.archive.get(id);
+
+		if (!parentTask) {
+			// TODO Обработка ошибок. Возможно, уведомление
+			return;
+		}
+
+		parentTask.subEntries?.forEach(subId => this.deleteTaskById(subId));
 	}
 
 	deleteTaskById(id: string) {

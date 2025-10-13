@@ -1,7 +1,7 @@
 
 import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon, Platform } from "obsidian";
 import TaskController from './controller';
-import { formatTime, formatDuration, calcOwnDuration, isTaskDone, isTaskSub } from './utils';
+import { formatTime, formatDuration, calcOwnDuration, isTaskDone, isTaskSub, isTaskProject } from './utils';
 import { TaskEntry } from "./types";
 import { EditTaskModal } from './modal';
 
@@ -157,11 +157,11 @@ export class TaskTimerView extends ItemView {
 			});
 
 		this.startBtn = new ButtonComponent(controls.controlEl)
-			.setIcon('step-forward')
-			.setTooltip('Stop all and start task')
+			.setIcon('square-play')
+			.setTooltip('Start project')
 			.setClass('task-timer-button')
 			.onClick(async () => {
-				this.controller.startNewTask(this.readAndClearInputValue());
+				this.controller.startNewProject(this.readAndClearInputValue());
 			});
 	}
 
@@ -171,8 +171,15 @@ export class TaskTimerView extends ItemView {
 		})
 		const controls = new Setting(bottomRow);
 
-		const playButton = new ButtonComponent(controls.controlEl)
-			.setClass('task-timer-action');
+		if (!isTaskProject(task)) {
+			new ButtonComponent(controls.controlEl)
+				.setClass('task-timer-action')
+				.setIcon('pause')
+				.setTooltip('Stop task')
+				.onClick(() => {
+					this.controller.endTask(task.id);
+				});
+		}
 
 		if (!isTaskSub(task)) {
 			new ButtonComponent(controls.controlEl)
@@ -181,20 +188,6 @@ export class TaskTimerView extends ItemView {
 				.setTooltip('Start sub task')
 				.onClick(() => {
 					this.controller.startSubTask(task.id, this.readAndClearInputValue());
-				});
-		}
-
-		if (isTaskDone(task)) {
-			playButton.setIcon('play')
-				.setTooltip('Start task with such name')
-				.onClick(() => {
-					this.controller.appendTask(task.name);
-				});
-		} else {
-			playButton.setIcon('pause')
-				.setTooltip('Stop task')
-				.onClick(() => {
-					this.controller.endTask(task.id);
 				});
 		}
 
@@ -208,6 +201,8 @@ export class TaskTimerView extends ItemView {
 	}
 
 	private renderTime(container: HTMLElement, task: TaskEntry) {
+		if (isTaskProject(task)) return;
+
 		const dateWrapperEl = container.createEl('p', {
 			cls: 'task-timer-item__time-wrap'
 		});
@@ -232,9 +227,12 @@ export class TaskTimerView extends ItemView {
 		});
 
 		if (!isTaskSub(task)) {
+			let icon = isTaskDone(task) ? 'circle-check-big' : 'loader-circle';
+			icon = isTaskProject(task) ? 'folder-dot' : icon;
+			
 			setIcon(spanLabel.createSpan({
 				cls: 'task-timer-item__label-icon'
-			}), isTaskDone(task) ? 'circle-check-big' : 'loader-circle');
+			}), icon);
 		}
 
 		spanLabel.createEl('h3', {
@@ -255,9 +253,12 @@ export class TaskTimerView extends ItemView {
 				isTaskDone(task)
 					? 'task-timer-item--done'
 					: 'task-timer-item--running',
-				isTaskSub(task) 
+				isTaskSub(task)
 					? 'task-timer-item--subtask'
-					: ''
+					: '',
+				isTaskProject(task)
+					? 'task-timer-item--project'
+					: '',
 			]
 		});
 

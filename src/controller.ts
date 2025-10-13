@@ -101,6 +101,11 @@ export default class TaskController {
 		}
 	}
 
+	startNewProject(name: string) {
+		this.model.appendProject(name);
+		this.updateAndSave();
+	}
+
 	startNewTask(name: string) {
 		this.model.endAllTasks();
 		this.model.appendTask(name);
@@ -128,6 +133,7 @@ export default class TaskController {
 	}
 
 	deleteTask(id: string) {
+		this.model.deleteSubtasksById(id);
 		this.model.deleteTaskById(id);
 		this.updateAndSave();
 	}
