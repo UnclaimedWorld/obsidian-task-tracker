@@ -53,11 +53,13 @@ export class TimerModel {
 		return name;
 	}
 
-	getNewTask(name?: string): TaskEntry {
-		const id = Date.now() + 'c';
+	generateId() {
+		return Date.now() + 'c' + String(Math.random()).slice(2,5);
+	}
 
+	getNewTask(name?: string): TaskEntry {
 		return {
-			id,
+			id: this.generateId(),
 			name: this.getTaskName(name),
 			startTime: isoNow(),
 			endTime: null
@@ -69,6 +71,42 @@ export class TimerModel {
 		root.endTime = root.startTime;
 
 		this.archive.set(root.id, root);
+	}
+
+	makeTaskProject(id: string) {
+		const root = this.archive.get(id);
+
+		if (root) {
+			root.endTime = root.startTime;
+		}
+	}
+
+	copyTaskAsSub(parentId: string): string | null {
+		const parent = this.archive.get(parentId);
+		
+		if (!parent) {
+			return null;
+		}
+
+		const newTask: TaskEntry = {
+			...parent,
+			id: this.generateId(),
+			subEntries: undefined,
+			name: parent.name.replace(/^\[\w\w\]\s/, ''),
+			parentId
+		};
+
+		const childId = newTask.id;
+
+		if (parent.subEntries) {
+			parent.subEntries.push(childId);
+		} else {
+			parent.subEntries = [ childId ];
+		}
+
+		this.archive.set(newTask.id, newTask);
+
+		return newTask.id;
 	}
 
 	appendTask(name?: string) {

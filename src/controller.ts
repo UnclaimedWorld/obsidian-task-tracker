@@ -117,8 +117,10 @@ export default class TaskController {
 		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
-	startSubTask(taskId: string, name?: string) {
-		this.model.createSubTask(taskId, name);
+	startSubTask(parentId: string, name?: string) {
+		this.model.copyTaskAsSub(parentId);
+		this.model.createSubTask(parentId, name);
+		this.model.makeTaskProject(parentId);
 		this.updateAndSave();
 	}
 
