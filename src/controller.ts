@@ -12,6 +12,7 @@ export default class TaskController {
 	private archiveFileName = `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
 	isContentLoaded = false;
 	isLayoutOpened = false;
+	hiddenProjects: Set<string> = new Set();
 
 	constructor(private app: App) {
 		this.storage = new TaskStorage(this.app);
@@ -29,6 +30,10 @@ export default class TaskController {
 	}
 
 	// VIEW
+
+	isProjectHidden(projectId: string) {
+		return this.hiddenProjects.has(projectId);
+	}
 
 	async setViewOnce(view: TaskTimerView) {
 		this.view = view;
@@ -66,7 +71,7 @@ export default class TaskController {
 	async updateArchiveUrl(fileName: string) {
 		this.archiveFileName = fileName;
 		await this.loadArchive();
-		this.view.renderArchiveTable();
+		this.view.updateView();
 	}
 
 	async loadModel() {
@@ -113,7 +118,7 @@ export default class TaskController {
 	}
 
 	updateAndSave() {
-		this.view.renderArchiveTable();
+		this.view.updateView();
 		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
 	}
 
@@ -126,6 +131,16 @@ export default class TaskController {
 
 		this.model.createSubTask(parentId, name);
 		this.updateAndSave();
+	}
+
+	toggleProjectVisibility(projectId: string) {
+		if (this.hiddenProjects.has(projectId)) {
+			console.log(projectId)
+			this.hiddenProjects.delete(projectId);
+		} else {
+			this.hiddenProjects.add(projectId);
+		}
+		this.view.updateView();
 	}
 
 	appendTask(name: string) {

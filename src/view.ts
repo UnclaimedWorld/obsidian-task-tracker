@@ -61,7 +61,7 @@ export class TaskTimerView extends ItemView {
 
 	private async runInterval() {
 		this.interval = window.setInterval(() => {
-			this.updateView();
+			this.updateCount();
 		}, 1000);
 		this.registerInterval(this.interval);
 	}
@@ -89,6 +89,11 @@ export class TaskTimerView extends ItemView {
 	}
 
 	updateView() {
+		this.renderArchiveTable();
+		this.endBtn.setDisabled(!this.controller.getRunningTasks().length);
+	}
+
+	updateCount() {
 		this.taskTimeEls.forEach((timeEl, key) => {
 			const task = this.controller.getTaskById(key);
 
@@ -228,11 +233,21 @@ export class TaskTimerView extends ItemView {
 
 		if (!isTaskSub(task)) {
 			let icon = isTaskDone(task) ? 'circle-check-big' : 'loader-circle';
-			icon = isTaskProject(task) ? 'folder-dot' : icon;
-			
-			setIcon(spanLabel.createSpan({
+
+			const iconWrap = spanLabel.createSpan({
 				cls: 'task-timer-item__label-icon'
-			}), icon);
+			});
+			
+			if (isTaskProject(task)) {
+				icon = this.controller.isProjectHidden(task.id) ? 'folder-closed' : 'folder';
+
+				iconWrap.onclick = (event) => {
+					this.controller.toggleProjectVisibility(task.id);
+					event.stopPropagation();
+				}
+			}
+			
+			setIcon(iconWrap, icon);
 		}
 
 		spanLabel.createEl('h3', {
@@ -270,9 +285,11 @@ export class TaskTimerView extends ItemView {
 		this.renderTime(body, task);
 		this.renderTableAction(body, task);
 
-		this.controller
-			.populateSubtasks(task)
-			.forEach(task => this.renderRow(task));
+		if (!this.controller.isProjectHidden(task.id)) {
+			this.controller
+				.populateSubtasks(task)
+				.forEach(task => this.renderRow(task));
+		}
 	}
 
 	renderArchiveTable() {
