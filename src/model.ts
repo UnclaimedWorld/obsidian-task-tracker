@@ -1,5 +1,5 @@
 import { Archive, TaskEntry, TaskForm } from './types';
-import { isoNow, sortTasks } from './utils';
+import { isoNow, isTaskProject, sortTasks } from './utils';
 
 export class TimerModel {
 	archive: Archive;
@@ -81,18 +81,33 @@ export class TimerModel {
 		}
 	}
 
-	copyTaskAsSub(parentId: string): string | null {
+	copyTaskAsSub(parentId: string): null | boolean {
 		const parent = this.archive.get(parentId);
 		
 		if (!parent) {
 			return null;
 		}
 
+		if (isTaskProject(parent)) {
+			return true;
+		}
+
+		const delimeterIndex = parent.name.lastIndexOf(':');
+		const hasDelimiter = delimeterIndex > -1;
+
+		const name = hasDelimiter
+			? parent.name.slice(delimeterIndex + 1).trim()
+			: parent.name.replace(/^\[\w\w\]\s/, '');
+
+		parent.name = hasDelimiter
+			? parent.name.slice(0, delimeterIndex).trim()
+			: parent.name;
+
 		const newTask: TaskEntry = {
 			...parent,
 			id: this.generateId(),
 			subEntries: undefined,
-			name: parent.name.replace(/^\[\w\w\]\s/, ''),
+			name,
 			parentId
 		};
 
@@ -106,7 +121,7 @@ export class TimerModel {
 
 		this.archive.set(newTask.id, newTask);
 
-		return newTask.id;
+		return false;
 	}
 
 	appendTask(name?: string) {

@@ -241,8 +241,12 @@ export class TaskTimerView extends ItemView {
 		});
 
 		spanLabel.onclick = async () => {
-			this.controller.copyTaskName(task);
+			this.copyTaskName(task);
 		};
+	}
+
+	copyTaskName(task: TaskEntry) {
+		this.input.setValue(task.name);
 	}
 
 	private renderRow(task: TaskEntry) {
