@@ -171,7 +171,7 @@ export class TaskTimerView extends ItemView {
 		})
 		const controls = new Setting(bottomRow);
 
-		if (!isTaskProject(task)) {
+		if (!isTaskProject(task) && !isTaskDone(task)) {
 			new ButtonComponent(controls.controlEl)
 				.setClass('task-timer-action')
 				.setIcon('pause')
