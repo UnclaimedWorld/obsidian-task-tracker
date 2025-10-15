@@ -175,6 +175,7 @@ export class TaskTimerView extends ItemView {
 			cls: 'task-timer-item__actions'
 		})
 		const controls = new Setting(bottomRow);
+		const { parentId } = task;
 
 		if (!isTaskProject(task) && !isTaskDone(task)) {
 			new ButtonComponent(controls.controlEl)
@@ -194,6 +195,14 @@ export class TaskTimerView extends ItemView {
 				.onClick(() => {
 					this.controller.startSubTask(task.id, this.readAndClearInputValue());
 				});
+		} else if (parentId) {
+			new ButtonComponent(controls.controlEl)
+				.setClass('task-timer-action')
+				.setIcon('repeat-1')
+				.setTooltip('Repeat sub task')
+				.onClick(() => {
+					this.controller.startSubTask(parentId, task.name);
+				});
 		}
 
 		new ButtonComponent(controls.controlEl)
@@ -206,17 +215,15 @@ export class TaskTimerView extends ItemView {
 	}
 
 	private renderTime(container: HTMLElement, task: TaskEntry) {
-		if (isTaskProject(task)) {
-			return;
-		}
-
 		const dateWrapperEl = container.createEl('p', {
 			cls: 'task-timer-item__time-wrap'
 		});
 
-		dateWrapperEl.createSpan({
-			text: `${formatTime(task.startTime)} - `
-		});
+		if (!isTaskProject(task)) {
+			dateWrapperEl.createSpan({
+				text: `${formatTime(task.startTime)} - `
+			});
+		}
 
 		this.taskTimeEls.set(task.id, dateWrapperEl.createSpan({
 			text: this.renderTimeText(task),
@@ -225,6 +232,10 @@ export class TaskTimerView extends ItemView {
 	}
 
 	private renderTimeText(task: TaskEntry) {
+		if (isTaskProject(task)) {
+			return formatDuration(this.controller.getProjectDuration(task.id));
+		}
+
 		return formatDuration(calcOwnDuration(task.startTime, task.endTime))
 	}
 

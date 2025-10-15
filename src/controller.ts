@@ -134,9 +134,12 @@ export default class TaskController {
 		this.updateAndSave();
 	}
 
+	getProjectDuration(parentId: string): number {
+		return this.model.getTasksDuration(parentId);
+	}
+
 	toggleProjectVisibility(projectId: string) {
 		if (this.hiddenProjects.has(projectId)) {
-			console.log(projectId)
 			this.hiddenProjects.delete(projectId);
 		} else {
 			this.hiddenProjects.add(projectId);

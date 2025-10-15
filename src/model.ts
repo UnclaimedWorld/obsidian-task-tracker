@@ -1,5 +1,5 @@
 import { Archive, TaskEntry, TaskForm } from './types';
-import { isoNow, isTaskProject, sortTasks } from './utils';
+import { calcOwnDuration, isoNow, isTaskProject, sortTasks } from './utils';
 
 export class TimerModel {
 	archive: Archive;
@@ -229,5 +229,23 @@ export class TimerModel {
 
 	getOverallRunningDuration(): number {
 		return 0;
+	}
+
+	getTasksDuration(parentId: string): number {
+		const tasksList = this.archive.get(parentId);
+
+		if (!tasksList) {
+			return 0;
+		}
+
+		return tasksList.subEntries?.reduce((total, id) => {
+			const task = this.archive.get(id);
+
+			if (task) {
+				return total + calcOwnDuration(task.startTime, task.endTime);
+			}
+
+			return total;
+		}, 0) || 0;
 	}
 }
