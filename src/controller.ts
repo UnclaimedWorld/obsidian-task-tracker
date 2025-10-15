@@ -124,6 +124,7 @@ export default class TaskController {
 
 	startSubTask(parentId: string, name?: string) {
 		const isProject = this.model.copyTaskAsSub(parentId);
+		this.model.endSubTasks(parentId);
 
 		if (!isProject) {
 			this.model.makeTaskProject(parentId);

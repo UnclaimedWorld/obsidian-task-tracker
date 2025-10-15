@@ -81,6 +81,16 @@ export class TimerModel {
 		}
 	}
 
+	endSubTasks(parentId: string) {
+		const parent = this.archive.get(parentId);
+
+		if (parent) {
+			parent.subEntries?.forEach(childId => {
+				this.endTaskById(childId);
+			})
+		}
+	}
+
 	copyTaskAsSub(parentId: string): null | boolean {
 		const parent = this.archive.get(parentId);
 		
@@ -168,7 +178,7 @@ export class TimerModel {
 		const task = this.archive.get(id);
 
 		if (task) {
-			task.endTime = isoNow();
+			task.endTime = task.endTime || isoNow();
 		}
 	}
 

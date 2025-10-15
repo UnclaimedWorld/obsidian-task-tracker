@@ -206,7 +206,9 @@ export class TaskTimerView extends ItemView {
 	}
 
 	private renderTime(container: HTMLElement, task: TaskEntry) {
-		if (isTaskProject(task)) return;
+		if (isTaskProject(task)) {
+			return;
+		}
 
 		const dateWrapperEl = container.createEl('p', {
 			cls: 'task-timer-item__time-wrap'
