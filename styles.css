@@ -1,3 +1,14 @@
+.task-timer-file-control {
+	.setting-item-control {
+		flex-wrap: nowrap !important;
+	}
+
+	button {
+		width: fit-content !important;
+		flex-shrink: 0 !important;
+	}
+}
+
 .task-timer-container {
   container-type: inline-size;
 	overflow-y: hidden;

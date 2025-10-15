@@ -9,7 +9,7 @@ export default class TaskController {
 	private model: TimerModel
 	private storage!: TaskStorage
 	private archiveFolderUrl = 'Достижения';
-	private archiveFileName = `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
+	private archiveFileName: string;
 	isContentLoaded = false;
 	isLayoutOpened = false;
 	hiddenProjects: Set<string> = new Set();
@@ -17,6 +17,11 @@ export default class TaskController {
 	constructor(private app: App) {
 		this.storage = new TaskStorage(this.app);
 		this.model = new TimerModel();
+		this.generateFileName();
+	}
+
+	private generateFileName() {
+		this.archiveFileName = `${window.moment().format('YYYY-MM-DD')}_CUSTOM.md`;
 	}
 
 	getPluginFiles() {
@@ -30,6 +35,12 @@ export default class TaskController {
 	}
 
 	// VIEW
+
+	async reloadPluginData() {
+		this.generateFileName();
+		await this.loadArchive();
+		this.view.updateView();
+	}
 
 	isProjectHidden(projectId: string) {
 		return this.hiddenProjects.has(projectId);

@@ -107,6 +107,7 @@ export class TaskTimerView extends ItemView {
 		const container = this.getContainer();
 
 		new Setting(container)
+			.setClass('task-timer-file-control')
 			.addDropdown(dropdown => {
 				const options = this.controller
 					.getPluginFiles()
@@ -124,7 +125,19 @@ export class TaskTimerView extends ItemView {
 					.onChange(async (value) => {
 						this.controller.updateArchiveUrl(value);
 					});
-			});
+			})
+			.addButton(reloadButton => {
+				const button = reloadButton.buttonEl;
+				
+				reloadButton
+					.setTooltip('Reload plugin data')
+					.setIcon('refresh-cw')
+					.onClick(() => {
+					this.controller.reloadPluginData();
+				});
+
+				button.type = 'button';
+			})
 
 		this.controlsEl = container.createDiv();
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
