@@ -2,11 +2,11 @@
 	.setting-item-control {
 		flex-wrap: nowrap !important;
 	}
+}
 
-	button {
-		width: fit-content !important;
-		flex-shrink: 0 !important;
-	}
+.task-timer-reload {
+	flex-shrink: 0 !important;
+	width: fit-content !important;
 }
 
 .task-timer-container {
@@ -30,7 +30,6 @@
 	.setting-item-control {
 		width: 100%;
 		margin-top: 0 !important;
-		flex-wrap: wrap;
 	}
 }
 
@@ -52,6 +51,10 @@
 	grid-template-areas:
 		"label label label action action"
 		"time time time action action";
+
+	.clickable-icon.extra-setting-button:not(.is-disabled) {
+		cursor: pointer;
+	}
 }
 
 .task-timer-item + .task-timer-item {
@@ -65,10 +68,6 @@
 .task-timer-item__label {
 	grid-area: label;
 	cursor: pointer;
-
-	svg {
-		color: var(--task-result-color);
-	}
 }
 
 .task-timer-item--running {
@@ -95,6 +94,7 @@
 .task-timer-item__label-icon {
 	vertical-align: middle;
 	margin-right: var(--size-4-1);
+	color: var(--task-result-color);
 }
 
 .task-timer-item__time {
@@ -135,6 +135,31 @@
 	flex-grow: 1;
 }
 
+.task-timer-tags-wrap .setting-item-control {
+	max-width: 250px;
+	display: grid;
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.task-timer-draggable-element {
+	position: fixed;
+	padding: var(--size-4-2);
+	background-color: var(--ui1);
+	box-shadow: var(--input-shadow);
+	border-radius: var(--button-radius);
+	cursor: pointer;
+	z-index: 2;
+	opacity: 0.4;
+	pointer-events: none;
+} 
+
+.task-timer-drag-screen {
+	pointer-events: none;
+	position: fixed;
+	background: var(--text-highlight-bg-active);
+	z-index: 1;
+}
+
 .is-mobile,
 .is-phone {
 	.task-timer-input {
@@ -144,6 +169,10 @@
 	.task-timer-button {
 		width: calc(30% - var(--size-4-2)) !important;
 		flex-grow: 1;
+	}
+
+	.setting-item-control .task-timer-reload:not(.clickable-icon) {
+		width: fit-content;
 	}
 }
 

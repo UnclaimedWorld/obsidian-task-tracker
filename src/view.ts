@@ -1,15 +1,15 @@
 
-import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon, Platform } from "obsidian";
+import { ItemView, WorkspaceLeaf, Setting, ButtonComponent, TextComponent, setIcon, Platform, ExtraButtonComponent } from "obsidian";
 import TaskController from './controller';
 import { formatTime, formatDuration, calcOwnDuration, isTaskDone, isTaskSub, isTaskProject } from './utils';
 import { TaskEntry } from "./types";
 import { EditTaskModal } from './modal';
 
 export const VIEW_TYPE_TASK_TIMER = "task-timer-view";
+const TASK_ID_ATTR = 'data-task-id';
 
 export class TaskTimerView extends ItemView {
 	input!: TextComponent;
-	startBtn!: ButtonComponent;
 	endBtn!: ButtonComponent;
 	subBtn!: ButtonComponent;
 
@@ -17,6 +17,7 @@ export class TaskTimerView extends ItemView {
 	private archiveTableEl!: HTMLElement;
 	private controlsEl!: HTMLElement;
 	private editModalInstance: EditTaskModal | null;
+	private fileSelector: Setting | null = null;
 	opened = false;
 
 	private taskTimeEls: Map<string, HTMLElement> = new Map();
@@ -103,10 +104,14 @@ export class TaskTimerView extends ItemView {
 		});
 	}
 
-	private renderBaseElements() {
+	private renderFileSelector() {
 		const container = this.getContainer();
 
-		new Setting(container)
+		if (this.fileSelector) {
+			this.fileSelector.clear();
+		}
+
+		this.fileSelector = new Setting(container)
 			.setClass('task-timer-file-control')
 			.addDropdown(dropdown => {
 				const options = this.controller
@@ -131,14 +136,22 @@ export class TaskTimerView extends ItemView {
 				
 				reloadButton
 					.setTooltip('Reload plugin data')
+					.setClass('task-timer-reload')
 					.setIcon('refresh-cw')
-					.onClick(() => {
-					this.controller.reloadPluginData();
+					.onClick(async () => {
+					await this.controller.reloadPluginData();
+					window.clearInterval(this.interval);
+					this.renderView();
 				});
 
 				button.type = 'button';
 			})
+	}
 
+	private renderBaseElements() {
+		const container = this.getContainer();
+
+		this.renderFileSelector();
 		this.controlsEl = container.createDiv();
 		this.archiveTableEl = container.createDiv({ cls: "task-timer-archive" });
 	}
@@ -173,14 +186,6 @@ export class TaskTimerView extends ItemView {
 			.onClick(async () => {
 				this.controller.endAllTasks();
 			});
-
-		this.startBtn = new ButtonComponent(controls.controlEl)
-			.setIcon('square-play')
-			.setTooltip('Start project')
-			.setClass('task-timer-button')
-			.onClick(async () => {
-				this.controller.startNewProject(this.readAndClearInputValue());
-			});
 	}
 
 	private renderTableAction(container: HTMLElement, task: TaskEntry) {
@@ -190,7 +195,7 @@ export class TaskTimerView extends ItemView {
 		const controls = new Setting(bottomRow);
 		const { parentId } = task;
 
-		if (!isTaskProject(task) && !isTaskDone(task)) {
+		if (!isTaskDone(task)) {
 			new ButtonComponent(controls.controlEl)
 				.setClass('task-timer-action')
 				.setIcon('pause')
@@ -198,25 +203,26 @@ export class TaskTimerView extends ItemView {
 				.onClick(() => {
 					this.controller.endTask(task.id);
 				});
+		} else {
+			if (!isTaskSub(task)) {
+				new ButtonComponent(controls.controlEl)
+					.setClass('task-timer-action')
+					.setIcon('step-forward')
+					.setTooltip('Start sub task')
+					.onClick(() => {
+						this.controller.startSubTask(task.id, this.readAndClearInputValue());
+					});
+			} else if (parentId) {
+				new ButtonComponent(controls.controlEl)
+					.setClass('task-timer-action')
+					.setIcon('repeat-1')
+					.setTooltip('Repeat sub task')
+					.onClick(() => {
+						this.controller.startSubTask(parentId, task.name);
+					});
+			}
 		}
 
-		if (!isTaskSub(task)) {
-			new ButtonComponent(controls.controlEl)
-				.setClass('task-timer-action')
-				.setIcon('step-forward')
-				.setTooltip('Start sub task')
-				.onClick(() => {
-					this.controller.startSubTask(task.id, this.readAndClearInputValue());
-				});
-		} else if (parentId) {
-			new ButtonComponent(controls.controlEl)
-				.setClass('task-timer-action')
-				.setIcon('repeat-1')
-				.setTooltip('Repeat sub task')
-				.onClick(() => {
-					this.controller.startSubTask(parentId, task.name);
-				});
-		}
 
 		new ButtonComponent(controls.controlEl)
 			.setClass('task-timer-button')
@@ -225,6 +231,108 @@ export class TaskTimerView extends ItemView {
 			.onClick(() => {
 				this.openEditModal(task);
 			});
+
+		const dragComponent = new ExtraButtonComponent(controls.controlEl)
+
+		if (!isTaskProject(task)) {
+			const el = dragComponent.extraSettingsEl;
+
+			dragComponent
+				.setIcon('grip-vertical')
+				.setTooltip('Hold and drag to set parent');
+			el.onpointerdown = this.getDragHandler(task);
+		} else {
+			dragComponent
+				.setIcon('folders')
+				.setDisabled(true)
+				.setTooltip('Can\'t change parent on project')
+		}
+	}
+
+	private getDragHandler(task: TaskEntry) {
+		return (startEvent: PointerEvent) => {
+			let element: HTMLDivElement | null = null;
+			let moveHandler: ((event: PointerEvent) => void) | null = null;
+			let dragScreen: HTMLDivElement | null = null;
+			let newParentId: string | null;
+
+			const dragTimeout = setTimeout(() => {
+				const updatePosition = (event: PointerEvent) => {
+					if (element) {
+						element.style.left = event.clientX - (element.offsetWidth / 2) + 'px';
+						element.style.top = event.clientY - (element.offsetHeight / 2) + 10 + 'px';
+					}
+				};
+
+				moveHandler = (moveEvent: PointerEvent) => {
+					newParentId = document
+						.elementFromPoint(moveEvent.clientX, moveEvent.clientY)
+						?.closest(`[${TASK_ID_ATTR}]`)
+						?.getAttr(TASK_ID_ATTR)
+						|| null;
+					const isNotSub = newParentId && !this.controller.isTaskSubOf(task.id, newParentId);
+					const isNotSame = task.id !== newParentId;
+
+					if (!dragScreen) {
+						dragScreen = document.createElement('div');
+					}
+
+					updatePosition(moveEvent);
+					
+					if (isNotSub && isNotSame) {
+						const hoveredTask = document.querySelector(`[${TASK_ID_ATTR}="${newParentId}"]`);
+
+						if (!hoveredTask) {
+							dragScreen.style.display = 'none';
+							return;
+						}
+
+						const hoveredRect = hoveredTask.getBoundingClientRect();
+
+						document.body.appendChild(dragScreen);
+
+						dragScreen.className = 'task-timer-drag-screen';
+						dragScreen.style.display = '';
+						dragScreen.style.left = hoveredRect.x + 'px';
+						dragScreen.style.top = hoveredRect.y + 'px';
+						dragScreen.style.width = hoveredRect.width + 'px';
+						dragScreen.style.height = hoveredRect.height + 'px';
+					} else {
+						dragScreen.style.display = 'none';
+						newParentId = null;
+					}
+				};
+
+
+				element = document.createElement('div');
+				element.className = 'task-timer-draggable-element';
+				element.textContent = task.name;
+
+				document.body.style.cursor = 'grab';
+				document.body.appendChild(element);
+
+				updatePosition(startEvent);
+				window.addEventListener('pointermove', moveHandler);
+			}, 150);
+
+			window.addEventListener('pointerup', () => {
+				if (moveHandler) {
+					window.removeEventListener('pointermove', moveHandler);
+				}
+
+				dragScreen?.remove();
+				element?.remove();
+				clearTimeout(dragTimeout);
+				document.body.style.cursor = '';
+
+				if (newParentId) {
+					this.controller.changeParent(task.id, newParentId);
+					console.log(newParentId);
+				}
+			}, {
+				once: true
+			});
+		};
 	}
 
 	private renderTime(container: HTMLElement, task: TaskEntry) {
@@ -304,7 +412,10 @@ export class TaskTimerView extends ItemView {
 				isTaskProject(task)
 					? 'task-timer-item--project'
 					: '',
-			]
+			],
+			attr: {
+				[TASK_ID_ATTR]: isTaskSub(task) && task.parentId ? task.parentId : task.id
+			}
 		});
 
 		this.renderLabel(body, task);

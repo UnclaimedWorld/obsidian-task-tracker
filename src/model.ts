@@ -15,6 +15,10 @@ export class TimerModel {
 		});
 	}
 
+	isTaskActive(task: TaskEntry): boolean {
+		return !task.endTime;
+	}
+
 	getFlatTasks(): TaskEntry[] {
 		const archive = Array.from(this.archive.values());
 		sortTasks(archive);
@@ -73,14 +77,6 @@ export class TimerModel {
 		this.archive.set(root.id, root);
 	}
 
-	makeTaskProject(id: string) {
-		const root = this.archive.get(id);
-
-		if (root) {
-			root.endTime = root.startTime;
-		}
-	}
-
 	endSubTasks(parentId: string) {
 		const parent = this.archive.get(parentId);
 
@@ -91,7 +87,17 @@ export class TimerModel {
 		}
 	}
 
-	copyTaskAsSub(parentId: string): null | boolean {
+	parentTask(taskId: string, parentId: string) {
+		const parent = this.archive.get(parentId);
+		const target = this.archive.get(taskId);
+
+		if (parent && target) {
+			parent.subEntries?.push(taskId);
+			target.parentId = parentId;
+		}
+	}
+
+	makeTaskProject(parentId: string): null | boolean {
 		const parent = this.archive.get(parentId);
 		
 		if (!parent) {
@@ -120,6 +126,8 @@ export class TimerModel {
 			name,
 			parentId
 		};
+
+		parent.endTime = parent.startTime;
 
 		const childId = newTask.id;
 
@@ -157,6 +165,28 @@ export class TimerModel {
 		parentTask.subEntries.unshift(subTask.id);
 
 		this.archive.set(subTask.id, subTask);
+	}
+
+	unparentTask(taskId: string) {
+		const task = this.archive.get(taskId);
+
+		if (task && task.parentId) {
+			const parentTask = this.archive.get(task.parentId);
+			if (!parentTask) return;
+
+			parentTask.subEntries = parentTask.subEntries?.filter(id => taskId !== id);
+			delete task.parentId;
+		}
+	}
+
+	isTaskSubOf(taskId: string, parentId: string) {
+		const target = this.archive.get(taskId);
+
+		if (!target) {
+			return false;
+		}
+
+		return target.parentId === parentId;
 	}
 
 	deleteSubtasksById(id: string) {

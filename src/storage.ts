@@ -35,7 +35,6 @@ export class TaskStorage {
 			const match = content.match(/```json\n([\s\S]*?)\n```/);
 			if (!match) return [];
 
-			
 			const data = JSON.parse(match[1]);
 			const entries: TaskEntry[] = data.entries;
 
@@ -49,7 +48,7 @@ export class TaskStorage {
 	async saveArchive(tasks: TaskEntry[], url: string): Promise<void> {
 		const data = JSON.stringify({
 			entries: tasks
-		});
+		}, undefined, 2);
 		const mdContent = `\`\`\`json\n${data}\n\`\`\``;
 
 		const file = this.app.vault.getAbstractFileByPath(url);

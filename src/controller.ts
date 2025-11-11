@@ -12,7 +12,7 @@ export default class TaskController {
 	private archiveFileName: string;
 	isContentLoaded = false;
 	isLayoutOpened = false;
-	hiddenProjects: Set<string> = new Set();
+	projectVisibility: Map<string, boolean> = new Map();
 
 	constructor(private app: App) {
 		this.storage = new TaskStorage(this.app);
@@ -34,16 +34,79 @@ export default class TaskController {
 		return pluginFiles;
 	}
 
+	getTags(): string[] {
+		return [
+			'IN',
+			'WK',
+			'HM',
+			'CR',
+			'LN',
+			'US',
+			'SC',
+			'ST',
+			'AL',
+			'HP',
+		];
+	}
+
+	// PROJECT
+
+	isProjectHidden(projectId: string) {
+		const project = this.model.getTaskById(projectId);
+		if (!project) return false;
+
+		return !(
+			this.projectVisibility.has(projectId)
+				? this.projectVisibility.get(projectId)
+				: this.model.getSubTasks(project)
+					.some(this.model.isTaskActive) 
+		);
+	}
+
+	startNewProject(name: string) {
+		this.model.appendProject(name);
+		this.updateAndSave();
+	}
+
+	startSubTask(parentId: string, name?: string) {
+		this.model.makeTaskProject(parentId);
+		this.model.endSubTasks(parentId);
+		this.model.createSubTask(parentId, name);
+		this.updateAndSave();
+	}
+
+	changeParent(targetId: string, parentId: string) {
+		this.model.makeTaskProject(parentId);
+		this.model.unparentTask(targetId);
+		this.model.parentTask(targetId, parentId);
+		this.updateAndSave();
+	}
+
+	clearParent(targetId: string) {
+		this.model.unparentTask(targetId);
+		this.updateAndSave();
+	}
+
+	getProjectDuration(parentId: string): number {
+		return this.model.getTasksDuration(parentId);
+	}
+
+	toggleProjectVisibility(projectId: string) {
+		const currentVisibility = this.isProjectHidden(projectId);
+
+		this.projectVisibility.set(projectId, currentVisibility);
+		this.view.updateView();
+	}
+
+	isTaskSubOf(taskId: string, parentId: string) {
+		return this.model.isTaskSubOf(taskId, parentId);
+	}
+
 	// VIEW
 
 	async reloadPluginData() {
 		this.generateFileName();
 		await this.loadArchive();
-		this.view.updateView();
-	}
-
-	isProjectHidden(projectId: string) {
-		return this.hiddenProjects.has(projectId);
 	}
 
 	async setViewOnce(view: TaskTimerView) {
@@ -117,11 +180,6 @@ export default class TaskController {
 		}
 	}
 
-	startNewProject(name: string) {
-		this.model.appendProject(name);
-		this.updateAndSave();
-	}
-
 	startNewTask(name: string) {
 		this.model.endAllTasks();
 		this.model.appendTask(name);
@@ -131,31 +189,6 @@ export default class TaskController {
 	updateAndSave() {
 		this.view.updateView();
 		this.storage.saveArchive(this.model.getFlatTasks(), this.getArchiveUrl());
-	}
-
-	startSubTask(parentId: string, name?: string) {
-		const isProject = this.model.copyTaskAsSub(parentId);
-		this.model.endSubTasks(parentId);
-
-		if (!isProject) {
-			this.model.makeTaskProject(parentId);
-		}
-
-		this.model.createSubTask(parentId, name);
-		this.updateAndSave();
-	}
-
-	getProjectDuration(parentId: string): number {
-		return this.model.getTasksDuration(parentId);
-	}
-
-	toggleProjectVisibility(projectId: string) {
-		if (this.hiddenProjects.has(projectId)) {
-			this.hiddenProjects.delete(projectId);
-		} else {
-			this.hiddenProjects.add(projectId);
-		}
-		this.view.updateView();
 	}
 
 	appendTask(name: string) {
@@ -169,8 +202,14 @@ export default class TaskController {
 	}
 
 	deleteTask(id: string) {
+		const task = this.model.getTaskById(id);
+		if (task?.parentId) {
+			this.model.unparentTask(task.id);	
+		}
+		
 		this.model.deleteSubtasksById(id);
 		this.model.deleteTaskById(id);
+		
 		this.updateAndSave();
 	}
 

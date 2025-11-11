@@ -1,7 +1,7 @@
 import { App, Modal, Setting, TextComponent } from 'obsidian';
 import TaskController from './controller';
 import { TaskEntry } from './types';
-import { formatDate, toISO } from './utils';
+import { formatDate, isTaskDone, isTaskSub, toISO } from './utils';
 
 export class EditTaskModal extends Modal {
 	private isInit = false;
@@ -44,14 +44,9 @@ export class EditTaskModal extends Modal {
 	}
 
 	onOpen() {
-		if (this.isInit) {
-			this.updateView();
-			return;
-		}
-
-		this.isInit = true;
-
 		const { contentEl } = this;
+
+		contentEl.innerHTML = '';
 
 		contentEl.createEl('h2', {
 			text: 'Edit task',
@@ -74,6 +69,30 @@ export class EditTaskModal extends Modal {
 
 			input.type = 'text';
 			component.setPlaceholder('e.g. Buy a milk');
+		});
+
+		const tagSetting = new Setting(formEl)
+		tagSetting.setClass('task-timer-tags-wrap')
+
+		this.controller.getTags().forEach(tag => {
+			tagSetting.addButton(component => {
+				const button = component.buttonEl;
+				const tagName = `[${tag}] `;
+
+				component.setButtonText(tag);
+
+				button.type = 'button';
+				button.onclick = () => {
+					let value = this.taskNameComponent.inputEl.value;
+					const match = value.match(/\[\w\w\]\s/)
+
+					if (match) {
+						value = value.slice(tagName.length);
+					}
+
+					this.taskNameComponent.inputEl.value = tagName + value;
+				};
+			});
 		});
 
 		const startTime = new Setting(formEl)
@@ -99,6 +118,43 @@ export class EditTaskModal extends Modal {
 		});
 
 		this.updateView();
+
+		const isSub = isTaskSub(this.task);
+		const isDone = isTaskDone(this.task);
+		const showAdditionalButtons = isSub || isDone;
+
+		if (showAdditionalButtons) {
+			const additionalButtons = new Setting(formEl)
+
+			if (isSub) {
+				additionalButtons.addExtraButton(component => {
+					const button = component.extraSettingsEl;
+
+					component
+						.setIcon('folder-output')
+						.setTooltip('Clear parent');
+
+					button.onclick = () => {
+						this.controller.clearParent(this.task.id)
+						this.close();
+					};
+				})
+			}
+
+			if (isDone) {
+				additionalButtons.addExtraButton(component => {
+					const button = component.extraSettingsEl;
+					component
+						.setIcon('reset')
+						.setTooltip('Reset task')
+
+					button.onclick = () => {
+						(endTime.components[1] as TextComponent).inputEl.value = '';
+						this.submitForm();
+					};
+				});
+			}
+		}
 
 		new Setting(formEl)
 			.addButton(deleteButton => {
